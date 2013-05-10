@@ -1,3 +1,1157 @@
+<<<<<<< HEAD
+=======
+2013-05-08  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/matcat.spad.pamphlet,
+	src/algebra/vector.spad.pamphlet: Add 'zero?' for
+	vectors and matrices.
+
+2013-05-07  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/lindep.spad.pamphlet,
+	src/algebra/efstruc.spad.pamphlet,
+	src/algebra/intden.spad.pamphlet: Make linear
+	dependence more consistent with linear solvers.
+
+2013-05-03  Krystian Baclawski <krystian.baclawski@gmail.com>
+
+	* configure, configure.ac: fixed fricas_debug_compiler variable
+	propagation to Makefiles.
+	* src/lisp/fricas-lisp.lisp: Prevent SBCL from crashing on entry to
+	debugger.
+
+2013-05-03  Andrey Grozin <A.G.Grozin@inp.nsk.su>
+
+	* configure.ac: For consistency skip cmucl and 
+	Clozure CL init files.
+
+2013-05-03  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/intden.spad.pamphlet: Clean up, export
+	'decompose' and 'solve_u'.
+
+2013-05-03  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/galpolyu.spad.pamphlet,
+	src/algebra/polycat.spad.pamphlet: Move unvectorise.
+
+2013-05-03  Krystian Baclawski  <krystian.baclawski@gmail.com>
+
+	* debian: Debian friendly way of creating deb packages.
+
+2013-05-03  Krystian Baclawski  <krystian.baclawski@gmail.com>
+
+	* Makefile.in: Don't fail in noweb has been already unpacked.
+	* src/algebra/Makefile.in: Make the step resumable, if interpsys
+	  fails.
+
+2013-05-03  Krystian Baclawski  <krystian.baclawski@gmail.com>
+
+	* src/scripts/build_helper: Make compilation set proper exit code on
+	  failures, add debug parameter.
+	* configure, configure.ac: Add configure flag to enable debug build.
+	* src/boot/Makefile.in, src/interp/Makefile.in: Propagate debug
+	  settings from configure.
+
+2013-05-01  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/liouv.spad.pamphlet,
+	src/algebra/special2.spad.pamphlet,
+	src/algebra/fs2ups.spad.pamphlet,
+	src/algebra/op.spad.pamphlet,
+	src/algebra/trigcat.spad.pamphlet,
+	src/algebra/expr.spad.pamphlet: Implement erfi.
+
+2013-05-01  Krystian Baclawski <krystian.baclawski@gmail.com>
+
+	* contrib/macos: Build application bundle for MacOSX.
+	* Makefile.in: Make FriCAS installation relocatable with 
+	  FRICAS_PREFIX environment variable.
+
+2013-04-29  Krystian Baclawski <krystian.baclawski@gmail.com>
+
+	* src/lib/edin.c, src/lib/fnct_key.c, src/lib/util.c,
+	src/lib/wct.c: Remove rusty workaround for ancient MacOSX'es.
+
+2013-04-22  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/intden.spad.pamphlet: Fix integration with
+	'li'.
+
+2013-04-17  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/rdeef.spad.pamphlet: Fix wrong normalization
+	in RDE.
+
+2013-04-07  Raoul Bourquin  <somebody@bluewin.ch>
+	    Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	Add package for matrix manipulation.
+	* src/algebra/mama.spad.pamphlet: New file.
+	src/algebra/Makefile.in: Adjust.
+
+2013-04-06  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* configure.ac, src/lisp/Makefile.in: Work around broken
+	Gentoo sbcl.
+	configure: regenerate.
+
+2013-04-06  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/lib/cfuns-c.c, src/interp/util.lisp: Fix build with
+	clisp.
+
+2013-04-06  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/fortran.spad.pamphlet,
+	src/algebra/ffcat.spad.pamphlet: Minor cleanup.
+
+2013-04-04  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/newfort.boot: Fix another fortran output problem.
+
+2013-04-04  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/i-syscmd.boot, src/lisp/fricas-lisp.lisp,
+	src/lisp/fricas-package.lisp: Fix ')undo'.
+
+2013-04-02  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/newfort.boot: Fix output of exponents.
+
+2013-03-31  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/intef.spad.pamphlet
+	src/interp/scan.boot, src/interp/parsing.lisp,
+	src/interp/scwrap2.boot: Small cleanups.
+
+2013-03-30  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/combfunc.spad.pamphlet,
+	src/algebra/fspace.spad.pamphlet: Use fresh dummies
+	for formal diffs.
+
+2013-03-21  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/macros.lisp: expand-tabs(): Really
+	expand all tabs.
+
+2013-03-19  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/s-parser.boot: Small Spad syntax change.
+
+2013-03-09  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/eigen.spad.pamphlet: Delete useless code.
+
+2013-02-22  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/indexedp.spad.pamphlet.
+	src/algebra/poly.spad.pamphlet: Only request Comparable
+	from the second argument to FreeModule.
+
+2013-01-20  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/s-parser.boot, src/interp/macros.lisp,
+	src/interp/property.lisp, src/interp/postpar.boot:
+	Minor cleanups.
+
+2012-12-29  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* *: More renames of 'Axiom' to 'FriCAS'.
+
+2012-12-29  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/scripts/norm-out:  Clean up.
+
+2012-11-08  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/trace.boot:  Fix untrace.
+
+2012-11-08  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/s-parser.boot, src/interp/parsing.lisp,
+	src/interp/scwrap2.boot:  Better error messages
+	from Spad parser.
+
+2012-11-08  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/s-parser.boot:  Simplify parser.
+	src/interp/bootlex.lisp:  Remove.
+	src/interp/Makefile.in:  Adjust.
+
+2012-11-07  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/matrix.spad.pamphlet,
+	src/algebra/matfuns.spad.pamphlet: Speed up matrix
+	operations.
+
+2012-11-06  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/lisp/primitives.lisp, src/interp/i-coerce.boot,
+	src/interp/i-coerfn.boot,
+	src/algebra/array2.spad.pamphlet,
+	src/algebra/matrix.spad.pamphlet,
+	src/algebra/modhpsol.spad.pamphlet: Use true 2-dimensional
+	arrays.
+
+2012-11-05  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/amodgcd.spad.pamphlet:  Fix wrong comparison
+	of degrees.
+
+2012-11-05  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/util.lisp, src/interp/scan.boot,
+	src/interp/bootlex.lisp, src/interp/parsing.lisp,
+	src/interp/macros.lisp, src/interp/category.boot,
+	src/interp/scwrap2.boot, src/interp/postpar.boot,
+	src/interp/property.lisp, src/interp/parse.boot,
+	src/interp/ncomp.boot:  Misc cleanups.
+
+2012-11-02  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/scan.boot:  Turn 'generate' into a keyword.
+	src/algebra/ssolve.spad.pamphlet,
+	src/algebra/fnla.spad.pamphlet,
+	src/algebra/distro.spad.pamphlet,
+	src/algebra/ituple.spad.pamphlet,
+	src/algebra/seg.spad.pamphlet,
+	src/algebra/mantepse.spad.pamphlet,
+	src/algebra/stream.spad.pamphlet,
+	src/algebra/rec.spad.pamphlet,
+	src/algebra/sttaylor.spad.pamphlet,
+	src/interp/scan.boot,
+	src/interp/i-spec1.boot:  Adjust.
+
+2012-10-31  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/s-parser.boot:  Make sure symbols
+	are keywords.
+
+2012-10-31  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/scan.boot, src/interp/cparse.boot,
+	src/interp/s-parser.boot:  Allow 'import from'.
+
+2012-10-31  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/scan.boot: Turn 'goto' into keyword.
+	src/algebra/fortran.spad.pamphlet: Adjust.
+
+2012-10-31  Ralf Hemmecke  <ralf@hemmecke.de>
+
+	* src/etc/fricas, contrib/emacs/fricas.el: fix problem with
+	calling efricas if user default shell is (t)csh
+
+2012-10-30  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/files.spad.pamphlet,
+	src/interp/s-parser.boot, src/interp/profile.boot,
+	src/interp/int-top.boot, src/interp/pf2sex.boot,
+	src/interp/setq.lisp, src/interp/macros.lisp,
+	src/interp/nrunopt.boot, src/interp/scwrap2.boot,
+	src/interp/ht-util.boot, src/interp/setvars.boot,
+	src/interp/postpar.boot, src/interp/server.boot,
+	src/interp/parse.boot, src/interp/ncomp.boot,
+	src/interp/bootlex.lisp:  Misc cleanups.
+
+2012-10-29  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/bezout.spad.pamphlet,
+	src/algebra/tree.spad.pamphlet,
+	src/algebra/manip.spad.pamphlet,
+	src/algebra/color.spad.pamphlet,
+	src/algebra/naalg.spad.pamphlet,
+	src/algebra/oderf.spad.pamphlet,
+	src/algebra/card.spad.pamphlet,
+	src/algebra/acplot.spad.pamphlet,
+	src/algebra/clip.spad.pamphlet,
+	src/algebra/algfact.spad.pamphlet,
+	src/algebra/op.spad.pamphlet,
+	src/algebra/rule.spad.pamphlet,
+	src/algebra/string.spad.pamphlet,
+	src/algebra/curve.spad.pamphlet,
+	src/algebra/clifford.spad.pamphlet,
+	src/algebra/lodof.spad.pamphlet,
+	src/algebra/cmplxrt.spad.pamphlet,
+	src/algebra/computation.spad.pamphlet:  More explicit imports.
+
+2012-10-29  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/scan.boot, src/interp/cparse.boot,
+	src/interp/scwrap2.boot, src/interp/pile.boot:
+	Use lowercase symbols in interpreter parser.
+
+2012-10-29  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/s-parser.boot, src/interp/scwrap2.boot:
+	Pass "SETTAB" and "BACKTAB" to Spad parser.
+	src/algebra/oderf.spad.pamphlet:  Remove extra parenthesis.
+
+2012-10-29  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/s-parser.boot, src/interp/scan.boot:  Remove
+	obsolete keywords from Spad parser.
+	src/algebra/syssolp.spad.pamphlet,
+	src/algebra/jet.spad.pamphlet: Do not use 'leave'.
+
+2012-10-28  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/boo_db.input, src/algebra/curve.spad.pamphlet:
+	Set $tryRecompileArguments to false for categories.
+	src/algebra/aggcat.spad.pamphlet,
+	src/algebra/algcat.spad.pamphlet,
+	src/algebra/algfunc.spad.pamphlet,
+	src/algebra/array2.spad.pamphlet,
+	src/algebra/boolean.spad.pamphlet,
+	src/algebra/catdef.spad.pamphlet,
+	src/algebra/curve.spad.pamphlet,
+	src/algebra/dpolcat.spad.pamphlet,
+	src/algebra/ffcat.spad.pamphlet,
+	src/algebra/fraction.spad.pamphlet,
+	src/algebra/fspace.spad.pamphlet,
+	src/algebra/gaussian.spad.pamphlet,
+	src/algebra/graph.spad.pamphlet,
+	src/algebra/jet.spad.pamphlet,
+	src/algebra/list.spad.pamphlet,
+	src/algebra/matcat.spad.pamphlet,
+	src/algebra/matrix.spad.pamphlet,
+	src/algebra/naalgc.spad.pamphlet,
+	src/algebra/newpoly.spad.pamphlet,
+	src/algebra/ore.spad.pamphlet,
+	src/algebra/polycat.spad.pamphlet,
+	src/algebra/pscat.spad.pamphlet,
+	src/algebra/reclos.spad.pamphlet
+	src/algebra/regset.spad.pamphlet,
+	src/algebra/sf.spad.pamphlet,
+	src/algebra/stream.spad.pamphlet,
+	src/algebra/symbol.spad.pamphlet,
+	src/algebra/triset.spad.pamphlet,
+	src/algebra/vector.spad.pamphlet,
+	src/algebra/triset.spad.pamphlet:  Add explicit imports.
+
+2012-10-28  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/define.boot, src/interp/functor.boot:  Do not
+	convert functions to macros.
+	src/algebra/combfunc.spad.pamphlet,
+	src/algebra/color.spad.pamphlet,
+	src/algebra/hashstate.spad.pamphlet,
+	src/algebra/xhash.spad.pamphlet,
+	src/algebra/matrix.spad.pamphlet,
+	src/algebra/boolean.spad.pamphlet,
+	src/algebra/forttyp.spad.pamphlet,
+	src/algebra/sregset.spad.pamphlet,
+	src/algebra/regset.spad.pamphlet,
+	src/algebra/newpoly.spad.pamphlet,
+	src/algebra/triset.spad.pamphlet,
+	src/algebra/ffnb.spad.pamphlet,
+	src/interp/functor.boot,
+	src/interp/define.boot:  Adjust.
+
+2012-10-27  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/functor.boot, src/interp/g-cndata.boot,
+	src/interp/g-opt.boot, src/interp/int-top.boot,
+	src/interp/g-util.boot, src/interp/compiler.boot,
+	src/lisp/fricas-lisp.lisp: Minor cleanups.
+
+2012-10-27  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/define.boot: Fix Spad tracing with ECL.
+
+2012-10-27  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/computil.spad.pamphlet: Add explicit coercions.
+
+2012-10-23  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/i-syscmd.boot, src/interp/macros.lisp,
+	src/interp/define.boot: Minor cleanups.
+
+2012-10-18  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/functor.boot, src/interp/i-syscmd.boot,
+	src/interp/scwrap2.boot, src/interp/clammed.boot,
+	src/lib/cfuns-c.c: Misc cleanups.
+
+2012-10-18  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* config/axiom-c-macros.h: Rename to
+	config/fricas_c_macros.h.
+	Adjust other files.
+
+2012-10-17  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/g-boot.boot: Minor cleanup.
+
+2012-10-17  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/scan.boot, src/interp/s-parser.boot,
+	src/interp/parsing.lisp, src/interp/msgdb.boot,
+	src/interp/scwrap2.boot, src/interp/server.boot:
+	A small speedup.
+
+2012-10-15  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/Makefile.in, src/interp/util.lisp,
+	src/interp/simpbool.boot, src/interp/nlib.lisp,
+	src/interp/g-boot.boot, src/interp/macros.lisp,
+	src/interp/define.boot, src/interp/spad.lisp:
+	Misc cleanups.
+
+2012-10-13  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/util.lisp, src/interp/scan.boot,
+	src/interp/s-parser.boot, src/interp/bootlex.lisp,
+	src/interp/parsing.lisp: Use interpreter scanner for Spad.
+	src/interp/preparse.lisp: Remove.
+	src/interp/Makefile.in: Adjust.
+	src/algebra/skpol.spad.pamphlet: Work around changed
+	pile rules.
+
+2012-10-13  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/setvart.boot, src/interp/i-toplev.boot,
+	src/interp/lisplib.boot: Minor fixes.
+
+2012-10-13  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/c-doc.boot, src/interp/c-util.boot,
+	src/interp/msgdb.boot, src/interp/vmlisp.lisp,
+	src/interp/spaderror.lisp: Minor cleanups.
+
+2012-10-13  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/solvedio.spad.pamphlet: Do not use 'free'
+	as identifier.
+
+2012-10-07  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/op.spad.pamphlet,
+	src/algebra/expr.spad.pamphlet,
+	src/algebra/algfunc.spad.pamphlet: Add 'rootSum'.
+
+2012-10-07  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/efstruc.spad.pamphlet: findLinearRelation2():
+	Avoid division by zero.
+
+2012-10-07  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/genser.spad.pamphlet: Really remove leading
+	zeros in 'nthRootIfCan'.
+
+2012-10-07  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/intrf.spad.pamphlet: Add ParallelIntegrationTools.
+	src/algebra/Makefile.in: Adjust.
+
+2012-10-06  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/limitps.spad.pamphlet: Use 'mrv_limit' also
+	for finite one-sided limits.
+
+2012-10-06  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/mfinfact.spad.pamphlet,
+	src/algebra/multfact.spad.pamphlet
+	src/algebra/polycat.spad.pamphlet
+	src/algebra/npcoef.spad.pamphlet: Minor cleanups.
+
+2012-10-05  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/geneez.spad.pamphlet: Minor cleanup.
+
+2012-10-02  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/pfbr.spad.pamphlet: Fix PFBR.
+
+2012-09-29  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/*.spad.pamphlet: Cleanup of 'pretend'.
+
+2012-09-29  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/intalg.spad.pamphlet: Another case
+	of unintegrable integrals.
+
+2012-09-23  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/expr.spad.pamphlet: More efficient
+	'alg_ker_set'.
+
+2012-09-22  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/*: Normalize whitespace.
+
+2012-09-14  Ralf Hemmecke  <ralf@hemmecke.de>
+
+	* src/algebra/Makefile.in, src/algebra/xhash.spad.pamphlet,
+	src/lisp/primitives.lisp: add XHashTable
+
+2012-09-14  Ralf Hemmecke  <ralf@hemmecke.de>
+
+	* src/algebra/hashstate.spad.pamphlet, src/lisp/primitives.lisp:
+	HASHSTATE: remove hyphen in Lisp identifiers
+
+2012-09-14  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/aggcat.spad.pamphlet: Generalize FLAGG.
+
+2012-09-13  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/kl.spad.pamphlet: Correctly handle
+	insertions during searches in SortedCache.
+
+2012-09-13  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/buildom.boot: Make sure that builtin domain
+	belong to right categories.
+
+2012-09-12  Raoul Bourquin  <somebody@bluewin.ch>
+
+	* src/algebra/intpm.spad.pamphlet: Pattern match
+	Fresnel integrals.
+
+2012-09-12  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/pgcd.spad.pamphlet: Fix problem with
+	bad reduction.
+
+2012-09-11  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/aggcat.spad.pamphlet,
+	src/algebra/list.spad.pamphlet,
+	src/algebra/table.spad.pamphlet,
+	src/interp/buildom.boot: Generalize hash tables.
+
+2012-09-08  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/algfunc.spad.pamphlet: Fix equality
+	of 'rootOf'.
+
+2012-09-07  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/limitps.spad.pamphlet: Use Gruntz
+	algorithm also for one sided limits.
+
+2012-09-07  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/genser.spad.pamphlet,
+	src/algebra/mrv_limit.spad.pamphlet,
+	src/algebra/limitps.spad.pamphlet: Small speedups.
+
+2012-09-05  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	Add Gruntz-Gonnet algorithm for computing limits.
+	* src/algebra/mrv_limit.spad.pamphlet: New file.
+	src/algebra/limitps.spad.pamphlet: Use 'mrv_limit'
+	for exp-log functions.
+
+2012-09-05  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/fs2ups.spad.pamphlet: Generalize power
+	series expanders.
+
+2012-09-05  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/rf.spad.pamphlet: Improve removal of
+	roots from denominators.
+
+2012-09-03  Ralf Hemmecke  <ralf@hemmecke.de>
+
+	* src/algebra/hashstate.spad.pamphle: add documentation for
+	HashState
+
+2012-09-02  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/nrunfast.boot: Add forceLazySlot (actually
+	added in previous commit).
+
+2012-09-02  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/setq.lisp: Add HashState to
+	'$optimizableConstructorNames'
+
+2012-09-01  Ralf Hemmecke  <ralf@hemmecke.de>
+
+	* src/algebra/ptranfn.spad.pamphlet: reduce requirement for of
+	argument type
+
+2012-08-31  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/ordinal.spad.pamphlet,
+	src/algebra/symbol.spad.pamphlet,
+	src/algebra/indexedp.spad.pamphlet,
+	src/algebra/multpoly.spad.pamphlet,
+	src/algebra/variable.spad.pamphlet: Implement 'hash'
+	for a few more domains.
+
+2012-08-30  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+	    Ralf Hemmecke  <ralf@hemmecke.de>
+
+	* src/algebra/hashstate.spad.pamphlet,
+	src/algebra/product.spad.pamphlet,
+	src/algebra/sf.spad.pamphlet,
+	src/algebra/integer.spad.pamphlet,
+	src/algebra/string.spad.pamphlet,
+	src/algebra/fmod.spad.pamphlet,
+	src/algebra/Makefile.in,
+	src/algebra/list.spad.pamphlet,
+	src/algebra/array1.spad.pamphlet,
+	src/algebra/vector.spad.pamphlet,
+	src/lisp/primitives.lisp: New implementation
+	of 'hash'.
+
+2012-08-30  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/expr.spad.pamphlet: Fix equality of
+	algebraic expressions.
+
+2012-08-29  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/intef.spad.pamphlet: Better integration
+	of symbolic derivatives.
+
+2012-08-26  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/poly.spad.pamphlet,
+	src/interp/define.boot, src/interp/compiler.boot:
+	Minor cleanups.
+
+2012-08-26  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	Support mutivariate Ore algebras.
+	* src/algebra/skpol.spad.pamphlet: New file.
+	src/algebra/catdef.spad.pamphlet: Add LeftOreRing.
+	src/algebra/Makefile.in: Adjust.
+
+2012-08-24  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/compiler.boot: Disable convertion of
+	undefined identifiers to symbols.
+	src/algebra/*: Adjust.
+
+2012-08-20  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/expr.spad.pamphlet: Fix reduction of
+	nested roots.
+
+2012-08-20  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/rdeef.spad.pamphlet: Handle primitives.
+
+2012-08-20  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/elemntry.spad.pamphlet: Signal error for
+	'acoth', 'asech' or 'acsch' at 0.
+
+2012-08-19  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/tableau.spad.pamphlet: Make Tableau CoercibleTo
+	OutputForm.
+
+2012-08-19  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/intfact.spad.pamphlet: primes(): Use
+	natural order.
+
+2012-08-19  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/fs2ups.spad.pamphlet: Enable expansion of
+	dilog at 1.
+
+2012-08-18  Raoul Bourquin  <somebody@bluewin.ch>
+
+	* src/algebra/limitps.spad.pamphlet: Add values at infinity
+	for a few special functions.
+
+2012-08-16  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/intpm.spad.pamphlet: Better handling of Si
+	and Ci.
+
+2012-08-11  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/integrat.spad.pamphlet,
+	src/algebra/efstruc.spad.pamphlet: Better normalization
+	of Liouvillian functions.
+
+2012-08-08  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/fs2expxp.spad.pamphlet: Disable incorrect
+	expansion.
+
+2012-08-08  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/catdef.spad.pamphlet,
+	src/algebra/naalgc.spad.pamphlet,
+	src/algebra/cycles.spad.pamphlet,
+	src/algebra/attribs.spad.pamphlet,
+	src/algebra/pscat.spad.pamphlet,
+	src/algebra/algcat.spad.pamphlet,
+	src/algebra/polycat.spad.pamphlet,
+	src/algebra/poly.spad.pamphlet,
+	src/algebra/Makefile.in: Add another category for noncommutative
+	polynomials.
+
+2012-08-06  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	Add univariate power series with arbitrary exponents.
+	* src/algebra/genser.spad.pamphlet: New file.
+	src/algebra/serexp.spad.pamphlet: Support new domain.
+	src/algebra/Makefile.in: Adjust.
+
+2012-08-05  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/defintrf.spad.pamphlet,
+	src/algebra/limitps.spad.pamphlet: Improve computing
+	sign of elementary functions.
+
+2012-08-05  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/interval.spad.pamphlet: Handle odd
+	roots of negative intervals.
+
+2012-07-29  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/fs2ups.spad.pamphlet: Fix problem with
+	previous commit.
+
+2012-07-27  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/serexp.spad.pamphlet,
+	src/algebra/fs2ups.spad.pamphlet: Fix Puiseux expansion
+	via lode.
+
+2012-07-26  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/fs2ups.spad.pamphlet: Fix 'acot' series.
+
+2012-07-25  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/puiseux.spad.pamphlet: Fix 'order'.
+
+2012-07-23  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+	    Bill Page  <bill.page@newsynthesis.org>
+
+	* src/interp/*.boot: Replace CAR and CDR by 'first' and
+	'rest'.
+
+2012-07-20  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/fs2ups.spad.pamphlet: Add special handling
+	of logarithms needed by Gruntz algorithm.
+
+2012-07-18  Raoul Bourquin  <somebody@bluewin.ch>
+
+	* src/algebra/liouv.spad.pamphlet,
+	src/algebra/special2.spad.pamphlet,
+	src/algebra/fs2ups.spad.pamphlet,
+	src/algebra/op.spad.pamphlet,
+	src/algebra/trigcat.spad.pamphlet,
+	src/algebra/expr.spad.pamphlet: Add Shi and Chi.
+
+2012-07-18  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* tex.spad.pamphlet: Fix superscripts in TeX output.
+
+2012-07-17  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/lodof.spad.pamphlet,
+	src/algebra/riccati.spad.pamphlet: Fix wrong factorizations.
+
+2012-07-10  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/exposed.lsp.pamphlet: Expose FLIOUFUN.
+
+2012-06-28  Krystian_Baclawski <krystian.baclawski@gmail.com>
+
+	* configure.ac: Fix problem on recent Mac OS X.
+
+2012-06-21  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/graph/view3D/smoothShade3d.c: Correct a typo.
+
+2012-06-16  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/intden.spad.pamphlet
+	src/algebra/intef.spad.pamphlet: Generalize.
+
+2012-06-14  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	Improve integration in terms of special functions.
+	* src/algebra/intden.spad.pamphlet: New file.
+	src/algebra/intrf.spad.pamphlet,
+	src/algebra/intef.spad.pamphlet: Use new functions.
+	src/algebra/Makefile.in: Adjust.
+
+2012-06-11  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/fs2ups.spad.pamphlet: Handle poles of Gamma.
+
+2012-06-06  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/integer.spad.pamphlet: qcoerce(): New
+	function.
+
+2012-05-22  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/float.spad.pamphlet: Change separator
+	for printing groups of digits form space to underscore.
+
+2012-05-19  Martin Baker  <ax87438@martinb.com>
+
+	* src/algebra/scene.spad.pamphlet,
+	src/algebra/graph.spad.pamphlet: Update graphics framework
+	and graph theory package.
+	src/algebra/Makefile.in: Adjust.
+
+2012-05-18  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/combfunc.spad.pamphlet: Better simplification
+	for lambertW.
+
+2012-05-14  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	Fixes for normalize.
+	* src/algebra/efstruc.spad.pamphlet: findLinearRelation2():
+	Find more simplifications.
+	logeval(): Avoid introducing new roots.
+
+2012-05-14  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/g-error.boot, src/interp/spaderror.lisp:
+	Support trapping errors.
+	src/algebra/numeric.spad.pamphlet: Trap errors in
+	'numericIfCan'.
+
+2012-05-07  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/msgdb.boot: wordFrom(): Do not ignore
+	underscores.
+
+2012-04-16  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/si.spad.pamphlet: Fix 'random()'.
+
+2012-04-01  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	Add modular polynomial gcd over algebraic extensions.
+	* src/algebra/amodgcd.spad.pamphlet: New file.
+	src/algebra/Makefile.in: Adjust.
+	src/input/agcd.input.pamphlet,
+	src/input/Makefile.in: Add tests.
+
+2012-03-30  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/special2.spad.pamphlet,
+	src/algebra/Makefile.in: Add numeric Liouvilian functions.
+
+2012-03-30  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/modhpsol.spad.pamphlet: Export
+	modpreduction, add little speedup.
+
+2012-03-30  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/setq.lisp: Add SortedExponentVector
+	to $optimizableConstructorNames.
+
+2012-03-29  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/format.boot: Correct unparsing of
+	argumentless function calls.
+
+2012-03-29  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/liouv.spad.pamphlet,
+	src/algebra/trigcat.spad.pamphlet: Change derivatives
+	of fresnelC and fresnelS.
+
+2012-03-22  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/special2.spad.pamphlet: Add complex
+	ellipticF and ellipticE.
+
+2012-03-22  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/combfunc.spad.pamphlet,
+	src/algebra/expr.spad.pamphlet:  Add missing jacobiZeta.
+
+2012-03-21  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* Makefile.in: Workaround for noweb build problem on
+	MacOS 10.7.
+
+2012-03-13  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/combfunc.spad.pamphlet: Fix derivatives
+	of meijerG.
+
+2012-03-13  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/c-util.boot: Fix compilation of nested if-s.
+	src/algebra/allfact.spad.pamphlet,
+	src/algebra/rdeef.spad.pamphlet: Fix wrong code uncoverd
+	by the compiler change.
+
+2012-03-08  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/special2.spad.pamphlet: Add dilog and
+	digamma.
+
+2012-03-08  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/lib/cfuns-c.c, src/interp/nlib.lisp,
+	src/lisp/fricas-lisp.lisp, src/lisp/fricas-package.lisp,
+	src/lisp/Makefile.in: Add C code for removing directories.
+	configure.ac: Dectect support for directory
+	operations.
+	 
+2012-03-01  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/gaussian.spad.pamphlet: Propagate
+	arbitraryPrecision.
+
+2012-02-22  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* configure.ac, src/lib/Makefile.in: Minor configure
+	cleanup.
+
+2012-02-22  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/compiler.boot, src/interp/define.boot:
+	Better error messages for wrong internal functions.
+
+2012-02-17  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/combfunc.spad.pamphlet,
+	src/algebra/expr.spad.pamphlet,
+	src/algebra/trigcat.spad.pamphlet: Correct order of
+	arguments to lerchPhi.
+
+2012-02-16  Ralf Hemmecke  <ralf@hemmecke.de>
+
+	* src/algebra/graph.spad.pamphlet: Fix problem with Matrix
+	argument.
+
+2012-02-15  Martin Baker <ax87438@martinb.com>
+	Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	Add graph theory package.
+	* src/algebra/graph.spad.pamphlet: New file.
+	src/algebra/Makefile.in: Adjust.
+
+2012-02-15  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	Add fast routine for parsing integers.
+	* src/algebra/computil.spad.pamphlet: New file.
+	src/algebra/Makefile.in: Adjust.
+
+2012-02-15  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/si.spad.pamphlet: Add 'qconvert'.
+
+2012-02-13  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/special2.spad.pamphlet,
+	src/algebra/fs2ups.spad.pamphlet: Add power series
+	expanders for Weierstrass elliptic functions at 0.
+
+2012-02-13  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/lisp/primitives.lisp: Fix qsqrt_DF and qlog_DF.
+
+2012-02-13  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/combfunc.spad.pamphlet: Fix eval of
+	hypergeometricF at 0.
+
+2012-02-10  Martin Baker <ax87438@martinb.com>
+
+	* src/algebra/scene.spad.pamphlet: Update.
+
+2012-02-10  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+	    Ralf Hemmecke  <ralf@hemmecke.de>
+
+	Adjust tests.
+	* src/input/bugs2012.input.pamphlet: New file.
+	src/input/ideal.input.pamphlet: Workaround interpreter
+	problem.
+
+2012-02-09  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/special2.spad.pamphlet: Add weierstrassInvariants
+	and modularInvariantJ.
+
+2012-02-09  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/special2.spad.pamphlet: Fix few bugs
+	in elliptic functions.
+
+2012-02-06  Ralf Hemmecke  <ralf@hemmecke.de>
+
+	* src/aldor/Makefile.in, src/algebra/qalgset.spad.pamphlet,
+	src/algebra/idecomp.spad.pamphlet: fix domains that were
+	blacklisted in the aldor-interface
+
+2012-02-05  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/string.spad.pamphlet,
+	src/interp/vmlisp.lisp, src/lisp/primitives.lisp:
+	Inline a few more string and character operations.
+
+2012-02-05  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/matrix.spad.pamphlet: Revert accidentally
+	commited code.
+
+2012-02-04  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/prs.spad.pamphlet,
+	src/algebra/op.spad.pamphlet, src/interp/setq.lisp,
+	src/interp/nruncomp.boot: Minor cleanups and fixes.
+
+2012-02-04  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/Makefile.in, src/interp/setq.lisp:
+	Inline operations from a few more domains.
+
+2012-02-04  Martin Baker <ax87438@martinb.com>
+	    Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/matcat.spad.pamphlet,
+	src/algebra/rep1.spad.pamphlet: Add kroneckerProduct
+	and kroneckerSum.
+
+2012-02-03  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/combfunc.spad.pamphlet,
+	src/algebra/op.spad.pamphlet,
+	src/algebra/trigcat.spad.pamphlet: Add Jacobi Zeta.
+
+2012-01-31  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	Remove depsys.
+	* src/interp/primitives.lisp: move to
+	src/lisp/primitives.lisp,
+	src/interp/macros.lisp, src/interp/vmlisp.lisp:
+	move macros to src/lisp/primitives.lisp and
+	src/lisp/fricas-lisp.lisp, remove useless macros.
+	src/interp/buildom.boot, src/interp/bootlex.lisp,
+	src/interp/br-con.boot, src/interp/br-op1.boot,
+	src/interp/compiler.boot, src/interp/c-util.boot,
+	src/interp/i-syscmd.boot, src/interp/lisplib.boot,
+	src/interp/nrungo.boot, src/interp/spad.lisp.
+	src/interp/trace.boot, src/interp/util.lisp,
+	src/interp/Makefile.in, src/lisp/Makefile.in:
+	Adjust.
+
+2012-01-31  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/br-saturn.boot, src/interp/debug.lisp,
+	src/interp/interop.boot, src/interp/macros.lisp,
+	src/interp/ncomp.boot, src/interp/parsing.lisp
+	file src/interp/setq.lisp: Minor cleanups.
+
+2012-01-30  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/string.spad.pamphlet: Add 'newline'
+	constant to 'Character'.
+
+2012-01-30  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* br-con.boot: Document 'construct' in 'Record'.
+
+2012-01-30  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/boolean.spad.pamphlet,
+	src/interp/g-util.boot, src/interp/macros.lisp,
+	src/interp/primitives.lisp, src/interp/scan.boot,
+	src/interp/vmlisp.lisp: Misc cleanups.
+
+2012-01-30  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/list.spad.pamphlet,
+	src/interp/*: Remove not needed macros.
+
+2012-01-30  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/u32vec.spad.pamphlet,
+	src/algebra/Makefile.in, src/interp/primitives.lisp:
+	Add vectors and matices of 8 and 16 bit numbers.
+
+2012-01-30  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/*: Remove most of now useless underscores.
+
+2012-01-29  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/sf.spad.pamphlet, src/interp/vmlisp.lisp:
+	Replace a few elementary functions by Spad versions.
+
+2012-01-29  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/sf.spad.pamphlet: Add few more elliptic
+	functions.
+
+2012-01-29  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/bootlex.lisp, src/interp/scan.boot:
+	Make underscores significant in Spad/interpreter names
+	and strings.
+
+2012-01-27  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/bootlex.lisp, src/interp/ncomp.boot:
+	Fix problem with scope of macros.
+
+2012-01-27  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/primitives.lisp: Improve qsqrt_DF and
+	qlog_DF.
+
+2012-01-27  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/special2.spad.pamphlet: Improve ELIPIDF.
+
+2012-01-27  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/gaussian.spad.pamphlet: Optimize
+	Complex(DoubleFloat) arithmetic.
+
+2012-01-24  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/algebra/sf.spad.pamphlet,
+	src/interp/primitives.lisp, src/interp/vmlisp.lisp:
+	Fix type mismatches discovered by ecl.
+
+2012-01-23  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* Makefile.in, src/algebra/Makefile.in
+	src/input/Makefile.in, src/boot/Makefile.in,
+	src/lisp/Makefile.in, src/paste/Makefile.in,
+	contrib/emacs/Makefile.in, config/setup-dep.mk:
+	Fix 'make distclean'.
+
+2012-01-22  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+
+	* src/interp/bootlex.lisp, src/interp/br-con.boot,
+	src/interp/br-saturn.boot, src/interp/clam.boot,
+	src/interp/define.boot, src/interp/functor.boot,
+	src/interp/g-boot.boot, src/interp/g-opt.boot,
+	src/interp/i-analy.boot, src/interp/i-coerfn.boot,
+	src/interp/i-intern.boot, src/interp/i-output.boot,
+	src/interp/macros.lisp, src/interp/msgdb.boot,
+	src/interp/package.boot, src/interp/parsing.lisp,
+	src/interp/preparse.lisp, src/interp/primitives.lisp,
+	src/interp/trace.boot, src/interp/vmlisp.lisp:
+	Misc cleanups.
+
+>>>>>>> upstream/master
 2012-01-21  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
 
 	* src/interp/compiler.boot, src/interp/primitives.lisp,
@@ -3826,13 +4980,13 @@
 	* src/input/bugs2008.input.pamphlet: correct test #301, add
 	expected(), fix some formatting.
 
-2008-01-12  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+2009-01-12  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
 
 	* src/algebra/efstruc.spad.pamphlet: Better normalization.
 	src/input/bugs2009.input.pamphlet: New file.
 	src/input/Makefile.in: Adjust.
 
-2008-01-10  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+2009-01-10  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
 
 	* src/algebra/coerce.spad.pamphlet,
 	src/algebra/exposed.lsp.pamphlet,
@@ -3842,31 +4996,31 @@
 	src/interp/interop.boot, src/interp/nrunopt.boot,
 	src/interp/parsing.lisp: Misc cleanups.
 
-2008-01-10  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+2009-01-10  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
 
 	* src/algebra/array1.spad.pamphlet: FlexibleArray,
 	IndexedFlexibleArray: Doc fix.
 
-2008-01-09  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+2009-01-09  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
 
 	Avoid breakage due to cleanup in r463.
 	* src/interp/br-op1.boot: dbShowOp1(): Allow integer
 	valued keys.
 
-2008-01-07  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+2009-01-07  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
 
 	Avoid referencing build directory when using ECL.
 	* src/interp/util.lisp: interpsys-ecl-image-init(): call
 	initroot and use value of $spadroot instead of frozen
 	build value.
 
-2008-01-07  Aleksej Saushev <asau@inbox.ru>
+2009-01-07  Aleksej Saushev <asau@inbox.ru>
 
 	Fix bootstrap failure with ECL on NetBSD.
 	* src/lisp/fricas-lisp.lisp: For ECL on NetBSD add :unix
 	to featues.
 
-2008-01-05  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+2009-01-05  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
 
 	* src/input/intef2.input.pamphlet,
 	src/input/intmix2.input.pamphlet: Remove redundant test files.
@@ -3874,13 +5028,13 @@
 	tests, fix wrong Laplace examples.
 	src/input/Makefile.in: Adjust.
 
-2008-01-04  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+2009-01-04  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
 
 	* src/interp/bootlex.lisp, src/interp/fnew.meta,
 	src/interp/fnewmeta.lisp, src/interp/parsing.lisp:
 	Scan special chars as symbols.
 
-2008-01-03  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
+2009-01-03  Waldek Hebisch  <hebisch@math.uni.wroc.pl>
 
 	* src/input/easter.input.pamphlet: Remove redundant test file.
 	src/input/Makefile.in: Adjust.

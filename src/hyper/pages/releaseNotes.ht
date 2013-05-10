@@ -7,6 +7,155 @@
 {http://fricas.sourceforge.net}
 
 \indent{0}
+FriCAS 1.2.0 news:
+\indent{3}
+
+-- New MatrixManipulation package.
+
+-- New ParallelIntegrationTools package.
+
+-- Gruntz algorithm in now used also for finite one-sided limits.
+
+-- FriCAS has now true 2-dimensional arrays (previously they were
+   emulated using vectors of vectors).
+
+-- Speedups in some matrix operations and in arithmetic with
+   algebraic expressions.
+
+-- FreeModule is now more general, it allows Comparable as second
+   argument.
+
+-- Changed Spad parser, it now uses common scanner with interpreter.
+   Spad language is now closer to interpreter language and Aldor.
+   'leave' is removed,  'free', 'generate' and 'goto' are now keywords.
+   Pile rules changed slightly, they should be more intuitve now.
+   Error messages from Spad parser should be slightly better.
+
+Bug fixes, in particular:
+
+-- Fixed a few build problems.
+
+-- Eliminated division by 0 during 'normalize'.
+
+-- 'nthRootIfCan' removes leading zeros from generalized series
+   (this avoids problems with power series expanders).
+
+-- Fixed corruption of formal derivatives.
+
+-- Fixed two problems with fortan output.
+
+-- Fixed ')untrace' and ')undo'.  Fixed ')trace' with ECL.
+
+-- Fixed problem with calling efricas if user default shell is (t)csh.
+
+\indent{0}
+FriCAS 1.1.8 news:
+\indent{3}
+
+-- Improvements of pattern matching integrator, it can now
+integrate in terms of Fresnel integrals and better handles
+integrals in terms of Si and Ci.
+
+-- Better integration of symbolic derivatives.
+
+-- Better normalization of Liouvillian functions.
+
+-- New package for computing limits using Gruntz algorithm.
+
+-- Faster removal of roots from denominators.
+
+-- New domains for mutivariate Ore algebras and partial
+differential operators.
+
+-- New package for noncommutative Groebner bases.
+
+-- New domain for univariate power series with arbitrary exponents.
+
+-- New special functions: Shi and Chi.
+
+-- Several aggregates (in particular tables) allow more general
+parameter types.
+
+-- New domain for hash tables using equality from underlying
+domain.
+
+Bug fixes, in particular:
+
+-- Fixed problem with gcd failing due to bad reduction.
+
+-- Fixed series of 'acot' and Puiseux series of several
+special functions.
+
+-- Fixed wrong factorization of differential operators.
+
+-- Fixed build problem on recent Mac OS X.
+
+\indent{0}
+FriCAS 1.1.7 news:
+\indent{3}
+
+- Improved integration in terms of special functions.
+
+- Updated new graphics framework and graph theory package.
+
+- Added routines for numerical evaluation of several special
+  functions.
+
+- Added modular method for computing polynomial gcd over algebraic extensions.
+
+- Derivatives of fresnelC and fresnelS are changed to agree
+  with established convention.
+
+- When printing floats groups of digits are now separated by
+  underscores (previously were separated by spaces).
+
+- Added C code for removing directories, this speeds up full
+  build and should avoid build problems on Mac OSX.
+
+Bug fixes, in particular:
+
+- Series expansion now handle poles of Gamma.
+
+- Fixed derivatives of meijerG.
+
+\indent{0}
+FriCAS 1.1.6 news:
+\indent{3}
+
+- Added experimental graph theory package.
+
+- Added power series expanders for Weierstrass elliptic
+  functions at 0.
+
+- New functions: kroneckerProduct and kroneckerSum for matrices,
+  numeric weierstrassInvariants and modularInvariantJ, symbolic
+  Jacobi Zeta, double float numeric elliptic integrals.
+
+- New domains for vectors and matrices of unsigned 8 and 16 bit integers.
+
+- Changes to Spad compiler: underscores which are not needed as escape
+  are now significant in Spad names and strings, macros with parameters
+  are supported, added partial support for exceptions, braces can
+  be used for grouping.
+
+- A few speedups.
+
+- Reduced disc space usage during build.
+
+Bug fixes, in particular:
+
+- Fixed eval of hypergeometricF at 0
+
+- Fixed problem with scope of macros.
+
+- Worked around problems with openinig named pipes in several Lisp
+  implementations.
+
+- Fixed a problem with searching documentation via HyperDoc.
+
+- Fixed build problem on Mac OSX.
+
+\indent{0}
 FriCAS 1.1.5 news:
 \indent{3}
 

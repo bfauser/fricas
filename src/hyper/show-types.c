@@ -39,7 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************/
 
-#include "axiom-c-macros.h"
+#include "fricas_c_macros.h"
 #include "debug.h"
 
 
@@ -294,7 +294,7 @@ show_text(TextNode *node, int Ender)
 
           case Endspadsrc:
           case Endspadcommand:
-            gInAxiomCommand = 1;
+              in_fricas_command = 1;
           case Endtableitem:
           case Enddescription:
           case Endpastebutton:
@@ -517,7 +517,7 @@ show_spadcommand(TextNode *node)
 {
     XWindowChanges wc;
 
-    gInAxiomCommand = 1;
+    in_fricas_command = 1;
 
     push_spad_group();
     wc.x = node->x;

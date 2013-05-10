@@ -55,7 +55,7 @@ makeLongStatStringByProperty _
   otherStatTotal := GET('other, property)
   for [name,class,:ab] in listofnames repeat
     name = 'other => 'iterate
-    cl := CAR LASSOC(class,listofclasses)
+    cl := first LASSOC(class, listofclasses)
     n := GET(name, property)
     PUT(cl, classproperty, n + GET(cl, classproperty))
     total := total + n
@@ -70,8 +70,8 @@ makeLongStatStringByProperty _
   if otherStatTotal > 0 then
     str := makeStatString(str,normalizeStatAndStringify otherStatTotal,'O,flag)
     total := total + otherStatTotal
-    cl := CAR LASSOC('other,listofnames)
-    cl := CAR LASSOC(cl,listofclasses)
+    cl := first LASSOC('other, listofnames)
+    cl := first LASSOC(cl, listofclasses)
     PUT(cl, classproperty, otherStatTotal + GET(cl, classproperty))
   if flag ~= 'long then
     total := 0
@@ -136,17 +136,17 @@ stopTimingProcess name ==
   popTimedName()
 
 --% Instrumentation specific to the interpreter
-SETANDFILEQ($oldElapsedSpace, 0)
-SETANDFILEQ($oldElapsedGCTime,0.0)
-SETANDFILEQ($oldElapsedTime,0.0)
-SETANDFILEQ($gcTimeTotal,0.0)
+DEFPARAMETER($oldElapsedSpace, 0)
+DEFPARAMETER($oldElapsedGCTime, 0.0)
+DEFPARAMETER($oldElapsedTime, 0.0)
+DEFPARAMETER($gcTimeTotal, 0.0)
 
 -- $timedNameStack is used to hold the names of sections of the
 -- code being timed.
 
-SETANDFILEQ($timedNameStack,'(other))
+DEFPARAMETER($timedNameStack, '(other))
 
-SETANDFILEQ($interpreterTimedNames,'(
+DEFPARAMETER($interpreterTimedNames, '(
 -- name         class abbrev
   (algebra        2 .   B) _
   (analysis       1 .   A) _
@@ -167,7 +167,7 @@ SETANDFILEQ($interpreterTimedNames,'(
   (resolve        1 .   R) _
   ))
 
-SETANDFILEQ($interpreterTimedClasses, '(
+DEFPARAMETER($interpreterTimedClasses, '(
 -- number class name    short name
   ( 1    interpreter     .  IN) _
   ( 2    evaluation      .  EV) _

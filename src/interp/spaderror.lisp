@@ -77,6 +77,14 @@
     `(handler-case (cons 0 ,form)
          (arithmetic-error () |$numericFailure|)))
 
+(defmacro |trappedSpadEval| (form)
+  `(let ((|$BreakMode| '|trapSpadErrors|))
+       (catch '|trapSpadErrors| (cons 0 ,form))))
+
+(defmacro |trappedSpadEvalUnion| (form)
+  `(let ((|$BreakMode| '|trapSpadErrors|))
+       (catch '|trapSpadErrors| ,form)))
+
 ;;;;;; considering this version for kcl
 ;;(defmacro |trapNumericErrors| (form)
 ;;   `(let ((val))
@@ -106,8 +114,8 @@
 #+:GCL
 (eval-when
  (load eval)
- (unembed 'system:universal-error-handler)
- (embed 'system:universal-error-handler
+ (UNEMBED 'system:universal-error-handler)
+ (EMBED 'system:universal-error-handler
             '(lambda (type correctable? op
                            continue-string error-string &rest args)
                (block

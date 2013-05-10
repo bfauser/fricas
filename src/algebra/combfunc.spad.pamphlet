@@ -19,7 +19,7 @@
 ++ Description:
 ++   CombinatorialOpsCategory is the category obtaining by adjoining
 ++   summations and products to the usual combinatorial operations;
-CombinatorialOpsCategory(): Category ==
+CombinatorialOpsCategory() : Category ==
   CombinatorialFunctionCategory with
     factorials : % -> %
       ++ factorials(f) rewrites the permutations and binomials in f
@@ -54,9 +54,9 @@ CombinatorialOpsCategory(): Category ==
 
 
 
-CombinatorialFunction(R, F): Exports == Implementation where
-  R: Join(Comparable, IntegralDomain)
-  F: FunctionSpace R
+CombinatorialFunction(R, F) : Exports == Implementation where
+  R : Join(Comparable, IntegralDomain)
+  F : FunctionSpace R
 
   OP  ==> BasicOperator
   K   ==> Kernel F
@@ -87,8 +87,8 @@ CombinatorialFunction(R, F): Exports == Implementation where
 
 We currently simplify binomial coefficients only for non-negative integral
 second argument, using the formula
-$$ \binom{n}{k}=\frac{1}{k!}\prod_{i=0..k-1} (n-i),$$
-except if the second argument is symbolic: in this case [[binomial(n,n)]] is
+$$ \binom{n}{k}=\frac{1}{k!}\prod_{i=0..k-1} (n-i), $$
+except if the second argument is symbolic : in this case [[binomial(n, n)]] is
 simplified to one.
 
 Note that there are at least two different ways to define binomial coefficients
@@ -116,7 +116,7 @@ undefined, since the limit does not exist in this case:
 Since we then have that $n-k+1\geq 1$, $\Gamma(n-k+1)$ is finite. So it is
 sufficient to consider $\frac{\Gamma(n+1)}{\Gamma(k+1)}$. On the one hand, we
 have
-$$\lim_{n_0\to n} \lim_{k_0\to k}\frac{\Gamma(n_0+1)}{\Gamma(k_0+1)} = 0,$$
+$$\lim_{n_0\to n} \lim_{k_0\to k}\frac{\Gamma(n_0+1)}{\Gamma(k_0+1)} = 0, $$
 since for any non-integral $n_0$, $\Gamma(n_0+1)$ is finite. On the other
 hand,
 $$\lim_{k_0\to k} \lim_{n_0\to n}\frac{\Gamma(n_0+1)}{\Gamma(k_0+1)}$$
@@ -125,12 +125,12 @@ $\Gamma(n_0+1)$ is unbounded.
 
 However, since for $k\in\mathbb Z$, $n\in\mathbb Z$ and $0 < k < n$ both
 definitions agree, one could also combine them. This is what, for example,
-Mathematica does. It seems that MuPAD sets [[binomial(n,n)=1]] for all
+Mathematica does. It seems that MuPAD sets [[binomial(n, n)=1]] for all
 arguments [[n]], and returns [[binomial(-2, n)]] unevaluated. Provisos may help
 here.
 
 <<package COMBF CombinatorialFunction>>=
-    permutation: (F, F) -> F
+    permutation : (F, F) -> F
       ++ permutation(n, r) returns the number of permutations of
       ++ n objects taken r at a time, i.e. n!/(n-r)!;
     factorial  : F -> F
@@ -198,7 +198,7 @@ here.
     K2fact    : (K, List SE) -> F
     smpfact   : (SMP, List SE) -> F
 
-    dummy == new()$SE :: F
+    dummy ==> new()$SE :: F
 @
 This macro will be used in [[product]] and [[summation]], both the $5$ and $3$
 argument forms. It is used to introduce a dummy variable in place of the
@@ -233,7 +233,7 @@ caused nested products and summations to fail. (Issue~\#72)
     import F
     import Kernel F
 
-    number?(x:F):Boolean ==
+    number?(x : F) : Boolean ==
       if R has RetractableTo(Z) then
         ground?(x) or
          ((retractIfCan(x)@Union(Fraction(Z),"failed")) case Fraction(Z))
@@ -242,7 +242,7 @@ caused nested products and summations to fail. (Issue~\#72)
 
     x ^ y               ==
       -- Do some basic simplifications
-      is?(x,POWER) =>
+      is?(x, POWER) =>
         args : List F := argument first kernels x
         not(#args = 2) => error "Too many arguments to ^"
         number?(first args) and number?(y) =>
@@ -250,8 +250,8 @@ caused nested products and summations to fail. (Issue~\#72)
         oppow [first args, (second args)* y]
       -- Generic case
       exp : Union(Record(val:F,exponent:Z),"failed") := isPower x
-      exp case Record(val:F,exponent:Z) =>
-        expr := exp::Record(val:F,exponent:Z)
+      exp case Record(val : F, exponent : Z) =>
+        expr := exp::Record(val : F, exponent : Z)
         oppow [expr.val, (expr.exponent)*y]
       oppow [x, y]
 
@@ -270,11 +270,11 @@ operators. A dummy variable is introduced to make the indexing variable \lq
 local\rq.
 
 <<package COMBF CombinatorialFunction>>=
-    product(x:F, i:SE) ==
+    product(x : F, i : SE) ==
       dm := dummy
       opprod [eval(x, k := kernel(i)$K, dm), dm, k::F]
 
-    summation(x:F, i:SE) ==
+    summation(x : F, i : SE) ==
       dm := dummy
       opsum [eval(x, k := kernel(i)$K, dm), dm, k::F]
 
@@ -282,7 +282,7 @@ local\rq.
 
 The two operations below implement differentiation of sums with and without
 bounds. Note that the function
-$$n\mapsto\sum_{k=1}^n f(k,n)$$
+$$n\mapsto\sum_{k=1}^n f(k, n)$$
 is well defined only for integral values of $n$ greater than or equal to zero.
 There is not even consensus how to define this function for $n<0$. Thus, it is
 not differentiable. Therefore, we need to check whether we erroneously are
@@ -291,7 +291,7 @@ same reasoning holds.
 
 Differentiating a sum with respect to its indexing variable correctly gives
 zero. This is due to the introduction of dummy variables in the internal
-representation of a sum: the operator [[%defsum]] takes 5 arguments, namely
+representation of a sum : the operator [[%defsum]] takes 5 arguments, namely
 
 \begin{enumerate}
 \item the summands, where each occurrence of the indexing variable is replaced
@@ -303,13 +303,13 @@ representation of a sum: the operator [[%defsum]] takes 5 arguments, namely
 \end{enumerate}
 
 Note that up to [[patch--40]] the following incorrect code was used, which
-tried to parallel the known rules for integration: (Issue~\#180)
+tried to parallel the known rules for integration : (Issue~\#180)
 
 \begin{verbatim}
     dvdsum(l, x) ==
       x = retract(y := third l)@SE => 0
       k := retract(d := second l)@K
-      differentiate(h := third rest rest l,x) * eval(f := first l, k, h)
+      differentiate(h := third rest rest l, x) * eval(f := first l, k, h)
         - differentiate(g := third rest l, x) * eval(f, k, g)
              + opdsum [differentiate(f, x), d, y, g, h]
 \end{verbatim}
@@ -342,22 +342,22 @@ bounds. Note again, that we cannot even properly define products with bounds
 that are not integral.
 
 To differentiate the product, we use Leibniz rule:
-$$\frac{d}{dx}\prod_{i=a}^b f(i,x) =
-\left(\sum_{i=a}^b \frac{\frac{d}{dx} f(i,x)}{f(i,x)}\right)
-\prod_{i=a}^b f(i,x)
+$$\frac{d}{dx}\prod_{i=a}^b f(i, x) =
+\left(\sum_{i=a}^b \frac{\frac{d}{dx} f(i, x)}{f(i, x)}\right)
+\prod_{i=a}^b f(i, x)
 $$
 
 There is one situation where this definition might produce wrong results,
-namely when the product is zero, but axiom failed to recognize it: in this
+namely when the product is zero, but axiom failed to recognize it : in this
 case,
 $$
-  \frac{d}{dx} f(i,x)/f(i,x)
+  \frac{d}{dx} f(i, x)/f(i, x)
 $$
 is undefined for some $i$. However, I was not able to come up with an
 example. The alternative definition
 $$
-  \frac{d}{dx}\prod_{i=a}^b f(i,x) =
-  \sum_{i=a}^b \left(\frac{d}{dx} f(i,x)\right)\prod_{j=a,j\neq i}^b f(j,x)
+  \frac{d}{dx}\prod_{i=a}^b f(i, x) =
+  \sum_{i=a}^b \left(\frac{d}{dx} f(i, x)\right)\prod_{j=a, j\neq i}^b f(j, x)
 $$
 has the slight (display) problem that we would have to come up with a new index
 variable, which looks very ugly. Furthermore, it seems to me that more
@@ -365,7 +365,7 @@ simplifications will occur with the first definition.
 
 <<TEST COMBF>>=
   f := operator 'f
-  D(product(f(i,x),i=1..m),x)
+  D(product(f(i, x), i = 1..m), x)
 @
 
 Note that up to [[patch--45]] these functions did not exist and products were
@@ -437,15 +437,15 @@ operators. A dummy variable is introduced to make the indexing variable \lq
 local\rq.
 
 <<package COMBF CombinatorialFunction>>=
-    product(x:F, s:SegmentBinding F) ==
+    product(x : F, s : SegmentBinding F) ==
       k := kernel(variable s)$K
       dm := dummy
-      opdprod [eval(x,k,dm), dm, k::F, lo segment s, hi segment s]
+      opdprod [eval(x, k, dm), dm, k::F, lo segment s, hi segment s]
 
-    summation(x:F, s:SegmentBinding F) ==
+    summation(x : F, s : SegmentBinding F) ==
       k := kernel(variable s)$K
       dm := dummy
-      opdsum [eval(x,k,dm), dm, k::F, lo segment s, hi segment s]
+      opdsum [eval(x, k, dm), dm, k::F, lo segment s, hi segment s]
 
     smpfact(p, l) ==
       map(x +-> K2fact(x, l), x +-> x::F, p)$PolynomialCategoryLifting(
@@ -453,7 +453,7 @@ local\rq.
 
     K2fact(k, l) ==
       empty? [v for v in variables(kf := k::F) | member?(v, l)] => kf
-      empty?(args:List F := [facts(a, l) for a in argument k]) => kf
+      empty?(args : List F := [facts(a, l) for a in argument k]) => kf
       is?(k, opperm) =>
         factorial(n := first args) / factorial(n - second args)
       is?(k, opbinom) =>
@@ -511,26 +511,26 @@ local\rq.
 
     if R has RetractableTo Z then
       iidsum l ==
-        (r1:=retractIfCan(fourth l)@Union(Z,"failed"))
+        (r1 := retractIfCan(fourth l)@Union(Z,"failed"))
          case "failed" or
-          (r2:=retractIfCan(fourth rest l)@Union(Z,"failed"))
+          (r2 := retractIfCan(fourth rest l)@Union(Z,"failed"))
             case "failed" or
-             (k:=retractIfCan(second l)@Union(K,"failed")) case "failed"
+             (k := retractIfCan(second l)@Union(K,"failed")) case "failed"
                => idsum l
-        +/[eval(first l,k::K,i::F) for i in r1::Z .. r2::Z]
+        +/[eval(first l, k::K, i::F) for i in r1::Z .. r2::Z]
 
       iidprod l ==
-        (r1:=retractIfCan(fourth l)@Union(Z,"failed"))
+        (r1 := retractIfCan(fourth l)@Union(Z,"failed"))
          case "failed" or
-          (r2:=retractIfCan(fourth rest l)@Union(Z,"failed"))
+          (r2 := retractIfCan(fourth rest l)@Union(Z,"failed"))
             case "failed" or
-             (k:=retractIfCan(second l)@Union(K,"failed")) case "failed"
+             (k := retractIfCan(second l)@Union(K,"failed")) case "failed"
                => idprod l
-        */[eval(first l,k::K,i::F) for i in r1::Z .. r2::Z]
+        */[eval(first l, k::K, i::F) for i in r1::Z .. r2::Z]
 
       iiipow l ==
           (u := isExpt(x := first l, OPEXP)) case "failed" => kernel(oppow, l)
-          rec := u::Record(var: K, exponent: Z)
+          rec := u::Record(var : K, exponent : Z)
           y := first argument(rec.var)
           (r := retractIfCan(y)@Union(Fraction Z, "failed")) case
               "failed" => kernel(oppow, l)
@@ -553,11 +553,11 @@ local\rq.
           zero? second l => error "0 ^ 0"
           0
 --        one? x or zero?(n := second l) => 1
-        (x = 1) or zero?(n: F := second l) => 1
+        (x = 1) or zero?(n : F := second l) => 1
 --        one? n => x
         (n = 1) => x
         (u := isExpt(x, OPEXP)) case "failed" => kernel(oppow, l)
-        rec := u::Record(var: K, exponent: Z)
+        rec := u::Record(var : K, exponent : Z)
 --        one?(y := first argument(rec.var)) or y = -1 =>
         ((y := first argument(rec.var))=1) or y = -1 =>
             (operator(rec.var)) (rec.exponent * y * n)
@@ -565,7 +565,7 @@ local\rq.
 
     if R has CombinatorialFunctionCategory then
       iifact x ==
-        (r:=retractIfCan(x)@Union(R,"failed")) case "failed" => ifact x
+        (r := retractIfCan(x)@Union(R,"failed")) case "failed" => ifact x
         factorial(r::R)::F
 
       iiperm l ==
@@ -585,17 +585,17 @@ for improvement here.
 
 <<package COMBF CombinatorialFunction>>=
          iibinom l ==
-           (s:=retractIfCan(second l)@Union(R,"failed")) case R and
-              (t:=retractIfCan(s)@Union(Z,"failed")) case Z and t>0 =>
-                ans:=1::F
+           (s := retractIfCan(second l)@Union(R,"failed")) case R and
+              (t := retractIfCan(s)@Union(Z,"failed")) case Z and t>0 =>
+                ans := 1::F
                 for i in 0..t-1 repeat
-                    ans:=ans*(first l - i::R::F)
+                    ans := ans*(first l - i::R::F)
                 (1/factorial t) * ans
-           (s:=retractIfCan(first l-second l)@Union(R,"failed")) case R and
-             (t:=retractIfCan(s)@Union(Z,"failed")) case Z and t>0 =>
-                ans:=1::F
+           (s := retractIfCan(first l-second l)@Union(R,"failed")) case R and
+             (t := retractIfCan(s)@Union(Z,"failed")) case Z and t>0 =>
+                ans := 1::F
                 for i in 1..t repeat
-                    ans:=ans*(second l+i::R::F)
+                    ans := ans*(second l+i::R::F)
                 (1/factorial t) * ans
            (r1 := retractIfCan(first l)@Union(R,"failed")) case "failed" or
              (r2 := retractIfCan(second l)@Union(R,"failed")) case "failed"
@@ -615,8 +615,8 @@ for improvement here.
 
     if R has ElementaryFunctionCategory then
       iipow l ==
-        (r1:=retractIfCan(first l)@Union(R,"failed")) case "failed" or
-          (r2:=retractIfCan(second l)@Union(R,"failed")) case "failed"
+        (r1 := retractIfCan(first l)@Union(R,"failed")) case "failed" or
+          (r2 := retractIfCan(second l)@Union(R,"failed")) case "failed"
             => ipow l
         (r1::R ^ r2::R)::F
     else
@@ -675,10 +675,10 @@ equality.
     setProperty(opdsum,  SPECIALDISP, ddsum@(List F -> O) pretend None)
     setProperty(opprod,  SPECIALDISP, dprod@(List F -> O) pretend None)
     setProperty(opdprod, SPECIALDISP, ddprod@(List F -> O) pretend None)
-    setProperty(opsum,   SPECIALEQUAL, equalsumprod@((K,K) -> Boolean) pretend None)
-    setProperty(opdsum,  SPECIALEQUAL, equaldsumprod@((K,K) -> Boolean) pretend None)
-    setProperty(opprod,  SPECIALEQUAL, equalsumprod@((K,K) -> Boolean) pretend None)
-    setProperty(opdprod, SPECIALEQUAL, equaldsumprod@((K,K) -> Boolean) pretend None)
+    setProperty(opsum,   SPECIALEQUAL, equalsumprod@((K, K) -> Boolean) pretend None)
+    setProperty(opdsum,  SPECIALEQUAL, equaldsumprod@((K, K) -> Boolean) pretend None)
+    setProperty(opprod,  SPECIALEQUAL, equalsumprod@((K, K) -> Boolean) pretend None)
+    setProperty(opdprod, SPECIALEQUAL, equaldsumprod@((K, K) -> Boolean) pretend None)
 
 @
 
@@ -693,9 +693,9 @@ equality.
 ++ Date Last Updated: 4 October 1993
 ++ Description: Provides some special functions over an integral domain.
 ++ Keywords: special, function.
-FunctionalSpecialFunction(R, F): Exports == Implementation where
-  R: Join(Comparable, IntegralDomain)
-  F: FunctionSpace R
+FunctionalSpecialFunction(R, F) : Exports == Implementation where
+  R : Join(Comparable, IntegralDomain)
+  F : FunctionSpace R
 
   OP  ==> BasicOperator
   K   ==> Kernel F
@@ -705,7 +705,7 @@ FunctionalSpecialFunction(R, F): Exports == Implementation where
   Exports ==> with
     belong? : OP -> Boolean
       ++ belong?(op) is true if op is a special function operator;
-    operator: OP -> OP
+    operator : OP -> OP
       ++ operator(op) returns a copy of op with the domain-dependent
       ++ properties appropriate for F;
       ++ error if op is not a special function operator
@@ -713,33 +713,33 @@ FunctionalSpecialFunction(R, F): Exports == Implementation where
       ++ abs(f) returns the absolute value operator applied to f
     Gamma   : F -> F
       ++ Gamma(f) returns the formal Gamma function applied to f
-    Gamma   : (F,F) -> F
-      ++ Gamma(a,x) returns the incomplete Gamma function applied to a and x
-    Beta:      (F,F) -> F
-      ++ Beta(x,y) returns the beta function applied to x and y
-    digamma:   F->F
+    Gamma   : (F, F) -> F
+      ++ Gamma(a, x) returns the incomplete Gamma function applied to a and x
+    Beta :      (F, F) -> F
+      ++ Beta(x, y) returns the beta function applied to x and y
+    digamma :   F->F
       ++ digamma(x) returns the digamma function applied to x
-    polygamma: (F,F) ->F
-      ++ polygamma(x,y) returns the polygamma function applied to x and y
-    besselJ:   (F,F) -> F
-      ++ besselJ(x,y) returns the besselj function applied to x and y
-    besselY:   (F,F) -> F
-      ++ besselY(x,y) returns the bessely function applied to x and y
-    besselI:   (F,F) -> F
-      ++ besselI(x,y) returns the besseli function applied to x and y
-    besselK:   (F,F) -> F
-      ++ besselK(x,y) returns the besselk function applied to x and y
-    airyAi:    F -> F
+    polygamma : (F, F) ->F
+      ++ polygamma(x, y) returns the polygamma function applied to x and y
+    besselJ :   (F, F) -> F
+      ++ besselJ(x, y) returns the besselj function applied to x and y
+    besselY :   (F, F) -> F
+      ++ besselY(x, y) returns the bessely function applied to x and y
+    besselI :   (F, F) -> F
+      ++ besselI(x, y) returns the besseli function applied to x and y
+    besselK :   (F, F) -> F
+      ++ besselK(x, y) returns the besselk function applied to x and y
+    airyAi :    F -> F
       ++ airyAi(x) returns the Airy Ai function applied to x
-    airyAiPrime:    F -> F
+    airyAiPrime :    F -> F
       ++ airyAiPrime(x) returns the derivative of Airy Ai function applied to x
-    airyBi:    F -> F
+    airyBi :    F -> F
       ++ airyBi(x) returns the Airy Bi function applied to x
-    airyBiPrime:    F -> F
+    airyBiPrime :    F -> F
       ++ airyBiPrime(x) returns the derivative of Airy Bi function applied to x
-    lambertW:  F -> F
+    lambertW :  F -> F
       ++ lambertW(x) is the Lambert W function at x
-    polylog: (F, F) -> F
+    polylog : (F, F) -> F
       ++ polylog(s, x) is the polylogarithm of order s at x
     weierstrassP : (F, F, F) -> F
       ++ weierstrassP(g2, g3, x)
@@ -833,6 +833,11 @@ FunctionalSpecialFunction(R, F): Exports == Implementation where
         ++ jacobiDn(z, m) is the Jacobi elliptic dn function, defined
         ++ by \spad{jacobiDn(z, m)^2 + m*jacobiSn(z, m)^2 = 1} and
         ++ \spad{jacobiDn(0, m) = 1}
+    jacobiZeta : (F, F) -> F
+        ++ jacobiZeta(z, m) is the Jacobi elliptic zeta function, defined
+        ++ by \spad{D(jacobiZeta(z, m), z) =
+        ++ jacobiDn(z, m)^2 - ellipticE(m)/ellipticK(m)} and
+        ++ \spad{jacobiZeta(0, m) = 0}.
     jacobiTheta : (F, F) -> F
         ++ jacobiTheta(q, z) is the third Jacobi Theta function
     lerchPhi : (F, F, F) -> F
@@ -866,7 +871,7 @@ might not re-evaluate the operator.
       ++ iiBeta(x) should be local but conditional;
     iidigamma  : F -> F
       ++ iidigamma(x) should be local but conditional;
-    iipolygamma: List F -> F
+    iipolygamma : List F -> F
       ++ iipolygamma(x) should be local but conditional;
     iiBesselJ  : List F -> F
       ++ iiBesselJ(x) should be local but conditional;
@@ -895,7 +900,9 @@ might not re-evaluate the operator.
     iiHypergeometricF : List F -> F
       ++ iiHypergeometricF(l) should be local but conditional;
     iiPolylog : (F, F) -> F
-      ++ iiPolylog(x) should be local but conditional;
+      ++ iiPolylog(x, s) should be local but conditional;
+    iLambertW : F -> F
+      ++ iLambertW(x) should be local but conditional;
 
   Implementation ==> add
 
@@ -909,12 +916,11 @@ might not re-evaluate the operator.
     iGamma    : F -> F
     iBeta     : (F, F) -> F
     idigamma  : F -> F
-    iiipolygamma: (F, F) -> F
+    iiipolygamma : (F, F) -> F
     iiiBesselJ  : (F, F) -> F
     iiiBesselY  : (F, F) -> F
     iiiBesselI  : (F, F) -> F
     iiiBesselK  : (F, F) -> F
-    iLambertW : F -> F
     iPolylog : List F -> F
 
     iWeierstrassP : (F, F, F) -> F
@@ -954,14 +960,14 @@ might not re-evaluate the operator.
 
     abs x         == opabs x
     Gamma(x)      == opGamma(x)
-    Gamma(a,x)    == opGamma2(a,x)
-    Beta(x,y)     == opBeta(x,y)
+    Gamma(a, x)    == opGamma2(a, x)
+    Beta(x, y)     == opBeta(x, y)
     digamma x     == opdigamma(x)
-    polygamma(k,x)== oppolygamma(k,x)
-    besselJ(a,x)  == opBesselJ(a,x)
-    besselY(a,x)  == opBesselY(a,x)
-    besselI(a,x)  == opBesselI(a,x)
-    besselK(a,x)  == opBesselK(a,x)
+    polygamma(k, x)== oppolygamma(k, x)
+    besselJ(a, x)  == opBesselJ(a, x)
+    besselY(a, x)  == opBesselY(a, x)
+    besselI(a, x)  == opBesselI(a, x)
+    besselK(a, x)  == opBesselK(a, x)
     airyAi(x)     == opAiryAi(x)
     airyAiPrime(x) == opAiryAiPrime(x)
     airyBi(x)     == opAiryBi(x)
@@ -991,29 +997,32 @@ might not re-evaluate the operator.
 
     import List Kernel(F)
     opdiff := operator(operator('%diff)$CommonOperators)$F
-    dm := new()$SE :: F
+    dummy ==> new()$SE :: F
 
-    ahalf: F := recip(2::F)::F
-    athird: F    := recip(3::F)::F
-    afourth: F   := recip(4::F)::F
-    asixth: F := recip(6::F)::F
-    twothirds: F := 2*athird
+    ahalf : F := recip(2::F)::F
+    athird : F    := recip(3::F)::F
+    afourth : F   := recip(4::F)::F
+    asixth : F := recip(6::F)::F
+    twothirds : F := 2*athird
     threehalfs : F := 3*ahalf
 
     -- Helpers for partially defined derivatives
 
-    grad2(l: List F, t: SE, op : OP, d2 : (F, F) -> F ): F ==
+    grad2(l : List F, t : SE, op : OP, d2 : (F, F) -> F ) : F ==
         x1 := l(1)
         x2 := l(2)
+        dm := dummy
         differentiate(x1, t)*kernel(opdiff, [op [dm, x2], dm, x1])
              + differentiate(x2, t)*d2(x1, x2)
 
-    grad3(l: List F, t: SE, op : OP, d3 : (F, F, F) -> F ): F ==
+    grad3(l : List F, t : SE, op : OP, d3 : (F, F, F) -> F ) : F ==
         x1 := l(1)
         x2 := l(2)
         x3 := l(3)
-        differentiate(x1, t)*kernel(opdiff, [op [dm, x2, x3], dm, x1])
-           + differentiate(x2, t)*kernel(opdiff, [op [x1, dm, x3], dm, x2])
+        dm1 := dummy
+        dm2 := dummy
+        differentiate(x1, t)*kernel(opdiff, [op [dm1, x2, x3], dm1, x1])
+           + differentiate(x2, t)*kernel(opdiff, [op [x1, dm2, x3], dm2, x2])
              + differentiate(x3, t)*d3(x1, x2, x3)
 
     -- handle WeierstrassPInverse
@@ -1697,6 +1706,40 @@ might not re-evaluate the operator.
 
     derivative(opJacobiDn, [eJacobiDnGrad_z, eJacobiDnGrad_m])
 
+    -- handle JacobiZeta
+
+    opJacobiZeta := operator('jacobiZeta)$CommonOperators
+
+    jacobiZeta(z, m) == opJacobiZeta(z, m)
+
+    eJacobiZeta(z : F, m : F) : F ==
+        z = 0 => 0
+        kernel(opJacobiZeta, [z, m])
+
+    elJacobiZeta(l : List F) : F == eJacobiZeta(l(1), l(2))
+    evaluate(opJacobiZeta, elJacobiZeta)$BasicOperatorFunctions1(F)
+
+    eJacobiZetaGrad_z(l : List F) : F ==
+        z := l(1)
+        m := l(2)
+        dn := jacobiDn(z, m)
+        dn*dn - ellipticE(m)/ellipticK(m)
+
+    eJacobiZetaGrad_m(l : List F) : F ==
+        z := l(1)
+        m := l(2)
+        ek := ellipticK(m)
+        ee := ellipticE(m)
+        er := ee/ek
+        dn := jacobiDn(z, m)
+        res1 := (dn*dn + m - 1)*jacobiZeta(z, m)
+        res2 := res1 + (m - 1)*z*dn*dn
+        res3 := res2 - m*jacobiCn(z, m)*jacobiDn(z, m)*jacobiSn(z, m)
+        res4 := res3 + z*(1 - m + dn*dn)*er
+        ahalf*(res4 - z*er*er)/(m*m - m)
+
+    derivative(opJacobiZeta, [eJacobiZetaGrad_z, eJacobiZetaGrad_m])
+
     -- handle JacobiTheta
 
     opJacobiTheta := operator('jacobiTheta)$CommonOperators
@@ -1718,7 +1761,7 @@ might not re-evaluate the operator.
     eLerchPhi(z : F, s : F, a : F) : F ==
         -- z = 0 => 1/a^s
         a = 1 => polylog(s, z)/z
-        kernel(opLerchPhi, [a, s, z])
+        kernel(opLerchPhi, [z, s, a])
 
     elLerchPhi(l : List F) : F == eLerchPhi(l(1), l(2), l(3))
     evaluate(opLerchPhi, elLerchPhi)$BasicOperatorFunctions1(F)
@@ -1730,6 +1773,7 @@ might not re-evaluate the operator.
         dz := differentiate(z, t)*(lerchPhi(z, s - 1, a) -
                 a*lerchPhi(z, s, a))/z
         da := -differentiate(a, t)*s*lerchPhi(z, s + 1, a)
+        dm := dummy
         differentiate(s, t)*kernel(opdiff, [opLerchPhi [z, dm, a], dm, s])
            + dz + da
 
@@ -1799,6 +1843,7 @@ might not re-evaluate the operator.
       is?(op, 'jacobiSn) => opJacobiSn
       is?(op, 'jacobiCn) => opJacobiCn
       is?(op, 'jacobiDn) => opJacobiDn
+      is?(op, 'jacobiZeta) => opJacobiZeta
       is?(op, 'jacobiTheta) => opJacobiTheta
       is?(op, 'lerchPhi) => opLerchPhi
       is?(op, 'riemannZeta) => opRiemannZeta
@@ -1846,9 +1891,15 @@ might not re-evaluate the operator.
         iAiryBi x == kernel(opAiryBi, x)
         iAiryBiPrime x == kernel(opAiryBiPrime, x)
 
-    iLambertW(x) ==
-        zero?(x) => 0
-        kernel(opLambertW, x)
+    if F has ElementaryFunctionCategory then
+        iLambertW(x) ==
+            zero?(x) => 0
+            x = exp(1$F) => 1$F
+            kernel(opLambertW, x)
+    else
+        iLambertW(x) ==
+            zero?(x) => 0
+            kernel(opLambertW, x)
 
     if F has ElementaryFunctionCategory then
         if F has LiouvillianFunctionCategory then
@@ -1890,63 +1941,63 @@ might not re-evaluate the operator.
 
     if R has SpecialFunctionCategory then
       iiGamma x ==
-        (r:=retractIfCan(x)@Union(R,"failed")) case "failed" => iGamma x
+        (r := retractIfCan(x)@Union(R,"failed")) case "failed" => iGamma x
         Gamma(r::R)::F
 
       iiBeta l ==
-        (r:=retractIfCan(first l)@Union(R,"failed")) case "failed" or _
-        (s:=retractIfCan(second l)@Union(R,"failed")) case "failed" _
+        (r := retractIfCan(first l)@Union(R,"failed")) case "failed" or _
+        (s := retractIfCan(second l)@Union(R,"failed")) case "failed" _
             => iBeta(first l, second l)
         Beta(r::R, s::R)::F
 
       iidigamma x ==
-        (r:=retractIfCan(x)@Union(R,"failed")) case "failed" => idigamma x
+        (r := retractIfCan(x)@Union(R,"failed")) case "failed" => idigamma x
         digamma(r::R)::F
 
       iipolygamma l ==
-        (s:=retractIfCan(first l)@Union(R,"failed")) case "failed" or _
-        (r:=retractIfCan(second l)@Union(R,"failed")) case "failed" _
+        (s := retractIfCan(first l)@Union(R,"failed")) case "failed" or _
+        (r := retractIfCan(second l)@Union(R,"failed")) case "failed" _
             => iiipolygamma(first l, second l)
         polygamma(s::R, r::R)::F
 
       iiBesselJ l ==
-        (r:=retractIfCan(first l)@Union(R,"failed")) case "failed" or _
-        (s:=retractIfCan(second l)@Union(R,"failed")) case "failed" _
+        (r := retractIfCan(first l)@Union(R,"failed")) case "failed" or _
+        (s := retractIfCan(second l)@Union(R,"failed")) case "failed" _
             => iiiBesselJ(first l, second l)
         besselJ(r::R, s::R)::F
 
       iiBesselY l ==
-        (r:=retractIfCan(first l)@Union(R,"failed")) case "failed" or _
-        (s:=retractIfCan(second l)@Union(R,"failed")) case "failed" _
+        (r := retractIfCan(first l)@Union(R,"failed")) case "failed" or _
+        (s := retractIfCan(second l)@Union(R,"failed")) case "failed" _
             => iiiBesselY(first l, second l)
         besselY(r::R, s::R)::F
 
       iiBesselI l ==
-        (r:=retractIfCan(first l)@Union(R,"failed")) case "failed" or _
-        (s:=retractIfCan(second l)@Union(R,"failed")) case "failed" _
+        (r := retractIfCan(first l)@Union(R,"failed")) case "failed" or _
+        (s := retractIfCan(second l)@Union(R,"failed")) case "failed" _
             => iiiBesselI(first l, second l)
         besselI(r::R, s::R)::F
 
       iiBesselK l ==
-        (r:=retractIfCan(first l)@Union(R,"failed")) case "failed" or _
-        (s:=retractIfCan(second l)@Union(R,"failed")) case "failed" _
+        (r := retractIfCan(first l)@Union(R,"failed")) case "failed" or _
+        (s := retractIfCan(second l)@Union(R,"failed")) case "failed" _
             => iiiBesselK(first l, second l)
         besselK(r::R, s::R)::F
 
       iiAiryAi x ==
-        (r:=retractIfCan(x)@Union(R,"failed")) case "failed" => iAiryAi x
+        (r := retractIfCan(x)@Union(R,"failed")) case "failed" => iAiryAi x
         airyAi(r::R)::F
 
       iiAiryAiPrime x ==
-        (r:=retractIfCan(x)@Union(R,"failed")) case "failed" => iAiryAiPrime x
+        (r := retractIfCan(x)@Union(R,"failed")) case "failed" => iAiryAiPrime x
         airyAiPrime(r::R)::F
 
       iiAiryBi x ==
-        (r:=retractIfCan(x)@Union(R,"failed")) case "failed" => iAiryBi x
+        (r := retractIfCan(x)@Union(R,"failed")) case "failed" => iAiryBi x
         airyBi(r::R)::F
 
       iiAiryBi x ==
-        (r:=retractIfCan(x)@Union(R,"failed")) case "failed" => iAiryBiPrime x
+        (r := retractIfCan(x)@Union(R,"failed")) case "failed" => iAiryBiPrime x
         airyBiPrime(r::R)::F
 
     else
@@ -1978,17 +2029,17 @@ might not re-evaluate the operator.
     -- Default behaviour is to build a kernel
     evaluate(opGamma, iiGamma)$BasicOperatorFunctions1(F)
     evaluate(opabs, iiabs)$BasicOperatorFunctions1(F)
---    evaluate(opGamma2    ,iiGamma2   )$BasicOperatorFunctions1(F)
-    evaluate(opBeta      ,iiBeta     )$BasicOperatorFunctions1(F)
-    evaluate(opdigamma   ,iidigamma  )$BasicOperatorFunctions1(F)
-    evaluate(oppolygamma ,iipolygamma)$BasicOperatorFunctions1(F)
-    evaluate(opBesselJ   ,iiBesselJ  )$BasicOperatorFunctions1(F)
-    evaluate(opBesselY   ,iiBesselY  )$BasicOperatorFunctions1(F)
-    evaluate(opBesselI   ,iiBesselI  )$BasicOperatorFunctions1(F)
-    evaluate(opBesselK   ,iiBesselK  )$BasicOperatorFunctions1(F)
-    evaluate(opAiryAi    ,iiAiryAi   )$BasicOperatorFunctions1(F)
+--    evaluate(opGamma2    , iiGamma2   )$BasicOperatorFunctions1(F)
+    evaluate(opBeta      , iiBeta     )$BasicOperatorFunctions1(F)
+    evaluate(opdigamma   , iidigamma  )$BasicOperatorFunctions1(F)
+    evaluate(oppolygamma , iipolygamma)$BasicOperatorFunctions1(F)
+    evaluate(opBesselJ   , iiBesselJ  )$BasicOperatorFunctions1(F)
+    evaluate(opBesselY   , iiBesselY  )$BasicOperatorFunctions1(F)
+    evaluate(opBesselI   , iiBesselI  )$BasicOperatorFunctions1(F)
+    evaluate(opBesselK   , iiBesselK  )$BasicOperatorFunctions1(F)
+    evaluate(opAiryAi    , iiAiryAi   )$BasicOperatorFunctions1(F)
     evaluate(opAiryAiPrime, iiAiryAiPrime)$BasicOperatorFunctions1(F)
-    evaluate(opAiryBi    ,iiAiryBi   )$BasicOperatorFunctions1(F)
+    evaluate(opAiryBi    , iiAiryBi   )$BasicOperatorFunctions1(F)
     evaluate(opAiryBiPrime, iiAiryBiPrime)$BasicOperatorFunctions1(F)
     evaluate(opLambertW, iLambertW)$BasicOperatorFunctions1(F)
     evaluate(opPolylog, iPolylog)$BasicOperatorFunctions1(F)
@@ -2007,61 +2058,53 @@ might not re-evaluate the operator.
 In the following we define the symbolic derivatives of the special functions we
 provide.  The formulas we use for the Bessel functions can be found in Milton
 Abramowitz and Irene A. Stegun, eds.  (1965). Handbook of Mathematical
-Functions with Formulas, Graphs, and Mathematical Tables. New York: Dover. ISBN
+Functions with Formulas, Graphs, and Mathematical Tables. New York : Dover. ISBN
 0-486-61272-4, Equations~9.1.27 and 9.6.26.  Up to [[patch--50]] the formula
 for $K$ missed the minus sign.  (Issue~\#355)
 
 We do not attempt to provide formulas for the derivative with respect to the
 first argument currently.  Instead, we leave such derivatives unevaluated.
 
-We need to get hold of the differentiation operator as modified by
-[[FunctionSpace]]. Otherwise, for example, display will be ugly.  We accomplish
-that by differentiating an operator, which will certainly result in a single
-kernel only.
-
 The differentiation operator [[opdiff]] takes three arguments corresponding to
 $$
-F_{,i}(a_1,a_2,\dots,a_n):
+F_{, i}(a_1, a_2, \dots, a_n):
 $$
 \begin{enumerate}
-\item $F(a_1,...,dm,...a_n)$, where the $i$\textsuperscript{th} argument is a
+\item $F(a_1, ..., dm, ...a_n)$, where the $i$\textsuperscript{th} argument is a
   dummy variable,
 \item $dm$, the dummy variable, and
 \item $a_i$, the point at which the differential is evaluated.
 \end{enumerate}
 
-In the following, it seems to be safe to use the same dummy variable
-throughout.  At least, this is done also in [[FunctionSpace]], and did not cause
-problems.
-
-The operation [[symbolicGrad]] returns the first component of the gradient of
-[[op l]].
-
 <<package FSPECF FunctionalSpecialFunction>>=
 
-    iBesselJ(l: List F, t: SE): F ==
-        n := first l; x := second l
-        differentiate(n, t)*kernel(opdiff, [opBesselJ [dm, x], dm, n])
-          + differentiate(x, t) * ahalf * (besselJ (n-1,x) - besselJ (n+1,x))
+    diff1(op : OP, n : F, x : F) : F ==
+        dm := dummy
+        kernel(opdiff, [op [dm, x], dm, n])
 
-    iBesselY(l: List F, t: SE): F ==
+    iBesselJ(l : List F, t : SE) : F ==
         n := first l; x := second l
-        differentiate(n, t)*kernel(opdiff, [opBesselY [dm, x], dm, n])
-          + differentiate(x, t) * ahalf * (besselY (n-1,x) - besselY (n+1,x))
+        differentiate(n, t)*diff1(opBesselJ, n, x)
+          + differentiate(x, t) * ahalf * (besselJ (n-1, x) - besselJ (n+1, x))
 
-    iBesselI(l: List F, t: SE): F ==
+    iBesselY(l : List F, t : SE) : F ==
         n := first l; x := second l
-        differentiate(n, t)*kernel(opdiff, [opBesselI [dm, x], dm, n])
-          + differentiate(x, t)* ahalf * (besselI (n-1,x) + besselI (n+1,x))
+        differentiate(n, t)*diff1(opBesselY, n, x)
+          + differentiate(x, t) * ahalf * (besselY (n-1, x) - besselY (n+1, x))
 
-    iBesselK(l: List F, t: SE): F ==
+    iBesselI(l : List F, t : SE) : F ==
         n := first l; x := second l
-        differentiate(n, t)*kernel(opdiff, [opBesselK [dm, x], dm, n])
-          - differentiate(x, t)* ahalf * (besselK (n-1,x) + besselK (n+1,x))
+        differentiate(n, t)*diff1(opBesselI, n, x)
+          + differentiate(x, t)* ahalf * (besselI (n-1, x) + besselI (n+1, x))
 
-    dPolylog(l: List F, t: SE): F ==
+    iBesselK(l : List F, t : SE) : F ==
+        n := first l; x := second l
+        differentiate(n, t)*diff1(opBesselK, n, x)
+          - differentiate(x, t)* ahalf * (besselK (n-1, x) + besselK (n+1, x))
+
+    dPolylog(l : List F, t : SE) : F ==
         s := first l; x := second l
-        differentiate(s, t)*kernel(opdiff, [opPolylog [dm, x], dm, s])
+        differentiate(s, t)*diff1(opPolylog, s, x)
            + differentiate(x, t)*polylog(s-1, x)/x
 @
 
@@ -2069,23 +2112,23 @@ For the moment we throw an error if we try to differentiate [[polygamma]] with
 respect to the first argument.
 
 <<package FSPECF FunctionalSpecialFunction>>=
-    ipolygamma(l: List F, x: SE): F ==
+    ipolygamma(l : List F, x : SE) : F ==
         import List(Symbol)
         member?(x, variables first l) =>
             error "cannot differentiate polygamma with respect to the first argument"
         n := first l; y := second l
         differentiate(y, x)*polygamma(n+1, y)
-    iBetaGrad1(l: List F): F ==
+    iBetaGrad1(l : List F) : F ==
         x := first l; y := second l
-        Beta(x,y)*(digamma x - digamma(x+y))
-    iBetaGrad2(l: List F): F ==
+        Beta(x, y)*(digamma x - digamma(x+y))
+    iBetaGrad2(l : List F) : F ==
         x := first l; y := second l
-        Beta(x,y)*(digamma y - digamma(x+y))
+        Beta(x, y)*(digamma y - digamma(x+y))
 
     if F has ElementaryFunctionCategory then
-      iGamma2(l: List F, t: SE): F ==
+      iGamma2(l : List F, t : SE) : F ==
         a := first l; x := second l
-        differentiate(a, t)*kernel(opdiff, [opGamma2 [dm, x], dm, a])
+        differentiate(a, t)*diff1(opGamma2, a, x)
           - differentiate(x, t)* x ^ (a - 1) * exp(-x)
       setProperty(opGamma2, SPECIALDIFF, iGamma2@((List F, SE)->F)
                                                  pretend None)
@@ -2096,7 +2139,7 @@ up to [[patch--50]], the properties for the Bessel functions were set using
 [[derivative(oppolygamma, [lzero, ipolygammaGrad])]], where [[lzero]] returned
 zero always.  Trying to replace [[lzero]] by a function that returns the first
 component of the gradient failed, it resulted in an infinite loop for
-[[integrate(D(besselJ(a,x),a),a)]].
+[[integrate(D(besselJ(a, x), a), a)]].
 
 <<package FSPECF FunctionalSpecialFunction>>=
 
@@ -2109,7 +2152,7 @@ component of the gradient failed, it resulted in an infinite loop for
         lw := lambertW(x)
         lw/(x*(1+lw))
 
-    iWeierstrassPGrad1(l: List F): F ==
+    iWeierstrassPGrad1(l : List F) : F ==
         g2 := first l
         g3 := second l
         x := third l
@@ -2119,7 +2162,7 @@ component of the gradient failed, it resulted in an infinite loop for
           *weierstrassZeta(g2, g3, x) + afourth*g2^2*x)
             - 9*g3*wp^2 + ahalf*g2^2*wp + 3*ahalf*g2*g3)/delta
 
-    iWeierstrassPGrad2(l: List F): F ==
+    iWeierstrassPGrad2(l : List F) : F ==
         g2 := first l
         g3 := second l
         x := third l
@@ -2128,10 +2171,10 @@ component of the gradient failed, it resulted in an infinite loop for
         (weierstrassPPrime(g2, g3, x)*(3*g2*weierstrassZeta(g2, g3, x)
           - 9*ahalf*g3*x) + 6*g2*wp^2 - 9*g3*wp-g2^2)/delta
 
-    iWeierstrassPGrad3(l: List F): F ==
+    iWeierstrassPGrad3(l : List F) : F ==
         weierstrassPPrime(first l, second l, third l)
 
-    iWeierstrassPPrimeGrad1(l: List F): F ==
+    iWeierstrassPPrimeGrad1(l : List F) : F ==
         g2 := first l
         g3 := second l
         x := third l
@@ -2143,7 +2186,7 @@ component of the gradient failed, it resulted in an infinite loop for
            + wpp*(9*ahalf*g3*wp + afourth*g2^2) - 18*g3*wp*wpp
              + ahalf*g2^2*wpp)/delta
 
-    iWeierstrassPPrimeGrad2(l: List F): F ==
+    iWeierstrassPPrimeGrad2(l : List F) : F ==
         g2 := first l
         g3 := second l
         x := third l
@@ -2155,11 +2198,11 @@ component of the gradient failed, it resulted in an infinite loop for
           + wpp*(-3*g2*wp - 9*ahalf*g3) + 12*g2*wp*wpp - 9*g3*wpp)/delta
 
 
-    iWeierstrassPPrimeGrad3(l: List F): F ==
+    iWeierstrassPPrimeGrad3(l : List F) : F ==
         g2 := first l
         6*weierstrassP(g2, second l, third l)^2 - ahalf*g2
 
-    iWeierstrassSigmaGrad1(l: List F): F ==
+    iWeierstrassSigmaGrad1(l : List F) : F ==
         g2 := first l
         g3 := second l
         x := third l
@@ -2171,7 +2214,7 @@ component of the gradient failed, it resulted in an infinite loop for
         afourth*(-9*g3*wsp2 - g2^2*ws
                   - 3*afourth*g2*g3*x^2*ws + g2^2*x*wsp)/delta
 
-    iWeierstrassSigmaGrad2(l: List F): F ==
+    iWeierstrassSigmaGrad2(l : List F) : F ==
         g2 := first l
         g3 := second l
         x := third l
@@ -2183,13 +2226,13 @@ component of the gradient failed, it resulted in an infinite loop for
         ahalf*(3*g2*wsp2 + 9*g3*ws
                  + afourth*g2^2*x^2*ws - 9*g3*x*wsp)/delta
 
-    iWeierstrassSigmaGrad3(l: List F): F ==
+    iWeierstrassSigmaGrad3(l : List F) : F ==
         g2 := first l
         g3 := second l
         x := third l
         weierstrassZeta(g2, g3, x)*weierstrassSigma(g2, g3, x)
 
-    iWeierstrassZetaGrad1(l: List F): F ==
+    iWeierstrassZetaGrad1(l : List F) : F ==
         g2 := first l
         g3 := second l
         x := third l
@@ -2199,7 +2242,7 @@ component of the gradient failed, it resulted in an infinite loop for
              - ahalf*g2*x*(ahalf*g2*wp+3*afourth*g3)
                + 9*afourth*g3*weierstrassPPrime(g2, g3, x))/delta
 
-    iWeierstrassZetaGrad2(l: List F): F ==
+    iWeierstrassZetaGrad2(l : List F) : F ==
         g2 := first l
         g3 := second l
         x := third l
@@ -2210,7 +2253,7 @@ component of the gradient failed, it resulted in an infinite loop for
                        - 3*ahalf*g2*weierstrassPPrime(g2, g3, x))/delta
 
 
-    iWeierstrassZetaGrad3(l: List F): F ==
+    iWeierstrassZetaGrad3(l : List F) : F ==
         -weierstrassP(first l, second l, third l)
 
 
@@ -2219,11 +2262,11 @@ component of the gradient failed, it resulted in an infinite loop for
     NNI ==> NonNegativeInteger
 
     if F has RetractableTo(Integer) then
-        get__int__listf : List F -> List Integer
-        get__int__listo : (Integer, List OF) ->  List Integer
-        get__int__listi : (Integer, List INP) ->  List Integer
+        get_int_listf : List F -> List Integer
+        get_int_listo : (Integer, List OF) ->  List Integer
+        get_int_listi : (Integer, List INP) ->  List Integer
 
-        get__int__listf(lf : List F) : List Integer ==
+        get_int_listf(lf : List F) : List Integer ==
             map(z +-> retract(z)@Integer, lf)$ListFunctions2(F, Integer)
 
         replace_i(lp : List F, v : F, i : NNI) : List F ==
@@ -2231,11 +2274,11 @@ component of the gradient failed, it resulted in an infinite loop for
 
         iiHypergeometricF(l) ==
             n := #l
-            z := l(n-3)
+            z := l(n-2)
             if z = 0 then
                 nn := (n - 2)::NNI
                 pq := rest(l, nn)
-                pqi := get__int__listf(pq)
+                pqi := get_int_listf(pq)
                 p := first(pqi)
                 q := first(rest(pqi))
                 p <= q + 1 => return 1
@@ -2244,15 +2287,16 @@ component of the gradient failed, it resulted in an infinite loop for
         idvsum(op : BasicOperator, n : Integer, l : List F, x : Symbol) : F  ==
             res : F := 0
             for i in 1..n for a in l repeat
+                dm := dummy
                 nl := replace_i(l, dm, i)
                 res := res + differentiate(a, x)*kernel(opdiff, [op nl, dm, a])
             res
 
-        dvhypergeom(l: List F, x: Symbol): F ==
+        dvhypergeom(l : List F, x : Symbol) : F ==
             n := #l
             nn := (n - 2)::NNI
             pq := rest(l, nn)
-            pqi := get__int__listf(pq)
+            pqi := get_int_listf(pq)
             ol := l
             l := first(l, nn)
             l1 := reverse(l)
@@ -2279,36 +2323,39 @@ component of the gradient failed, it resulted in an infinite loop for
             idvsum(opHypergeometricF, nn - 1, ol, x) +
                  differentiate(z, x)*aprod*opHypergeometricF(nl)
 
-        add__pairs__to__list(lp : List List F, l : List F): List F ==
+        add_pairs_to_list(lp : List List F, l : List F) : List F ==
             for p in lp repeat
                 #p ~= 2 => error "not a list of pairs"
                 l := cons(p(2), cons(p(1), l))
             l
 
-        dvmeijer(l: List F, x: Symbol): F ==
+        dvmeijer(l : List F, x : Symbol) : F ==
             n := #l
             nn := (n - 4)::NNI
             l0 := l
             nl := rest(l, nn)
-            nli := get__int__listf(nl)
+            nli := get_int_listf(nl)
             l := first(l, nn)
             l1 := reverse(l)
             z := first(l1)
             n1 := first(nli)
             n2 := nli(2)
             a := first l
+            sign : F := 1
             if n1 > 0 or n2 > 0 then
                  na := a - 1
+                 if n1 = 0 then sign := -1
                  l2 := cons(na, rest l)
             else
                  na := a
+                 if nli(3) > 0 then sign := -1
                  l2 := cons(a + 1, rest l)
+            nm : F := opMeijerG(concat(l2, nl))
+            om : F := opMeijerG(l0)
             idvsum(opMeijerG, nn - 1, l0, x) +
-                 differentiate(z, x)*(
-                    opMeijerG(concat(l2, nl)) +
-                      na*opMeijerG(l0))/z
+                differentiate(z, x)*(sign*nm + na*om)/z
 
-        get__if__list(n : Integer, lf : List INP) : List List INP ==
+        get_if_list(n : Integer, lf : List INP) : List List INP ==
             a := []@(List INP)
             for i in 1..n repeat
                 a := cons(first(lf), a)
@@ -2316,16 +2363,16 @@ component of the gradient failed, it resulted in an infinite loop for
             a := cons(convert('construct), reverse!(a))
             [a, lf]
 
-        get__if__lists(ln : List Integer, lf : List INP) : List List INP ==
+        get_if_lists(ln : List Integer, lf : List INP) : List List INP ==
             rl := []@(List List INP)
             for n in ln repeat
-                al := get__if__list(n, lf)
+                al := get_if_list(n, lf)
                 rl := cons(first(al), rl)
                 lf := first(rest(al))
             rl := reverse!(rl)
             cons(lf, rl)
 
-        get__int__listi(n : Integer, lo : List INP) : List Integer ==
+        get_int_listi(n : Integer, lo : List INP) : List Integer ==
             n0 := (#lo - n)::NNI
             lo := rest(lo, n0)
             rl := []@(List Integer)
@@ -2336,7 +2383,7 @@ component of the gradient failed, it resulted in an infinite loop for
             rl := reverse!(rl)
             rl
 
-        get__of__list(n : Integer, lo : List OF) : List List OF ==
+        get_of_list(n : Integer, lo : List OF) : List List OF ==
             a := []@(List OF)
             for i in 1..n repeat
                 a := cons(first(lo), a)
@@ -2344,16 +2391,16 @@ component of the gradient failed, it resulted in an infinite loop for
             a := reverse!(a)
             [a, lo]
 
-        get__of__lists(ln : List Integer, lo : List OF) : List List OF ==
+        get_of_lists(ln : List Integer, lo : List OF) : List List OF ==
             rl := []@(List List OF)
             for n in ln repeat
-                al := get__of__list(n, lo)
+                al := get_of_list(n, lo)
                 rl := cons(first(al), rl)
                 lo := first(rest(al))
             rl := reverse!(rl)
             cons(lo, rl)
 
-        get__int__listo(n : Integer, lo : List OF) : List Integer ==
+        get_int_listo(n : Integer, lo : List OF) : List Integer ==
             n0 := (#lo - n)::NNI
             lo := rest(lo, n0)
             rl := []@(List Integer)
@@ -2366,9 +2413,9 @@ component of the gradient failed, it resulted in an infinite loop for
 
         dhyper0(op : OF, lo : List OF) : OF ==
             n0 := (#lo - 2)::NNI
-            pql := get__int__listo(2, lo)
+            pql := get_int_listo(2, lo)
             lo := first(lo, n0)
-            al := get__of__lists(pql, lo)
+            al := get_of_lists(pql, lo)
             lo := first(al)
             al := rest(al)
             a := first al
@@ -2384,9 +2431,9 @@ component of the gradient failed, it resulted in an infinite loop for
 
         dmeijer0(op : OF, lo : List OF) : OF ==
             n0 := (#lo - 4)::NNI
-            nl := get__int__listo(4, lo)
+            nl := get_int_listo(4, lo)
             lo := first(lo, n0)
-            al := get__of__lists(nl, lo)
+            al := get_of_lists(nl, lo)
             lo := first(al)
             al := rest(al)
             z := first(lo)
@@ -2411,8 +2458,8 @@ component of the gradient failed, it resulted in an infinite loop for
                                             pretend None)
 
         inhyper(lf : List INP) : INP ==
-            pqi := get__int__listi(2, lf)
-            al := get__if__lists(pqi, lf)
+            pqi := get_int_listi(2, lf)
+            al := get_if_lists(pqi, lf)
             lf := first(al)
             al := rest(al)
             a := first al
@@ -2426,8 +2473,8 @@ component of the gradient failed, it resulted in an infinite loop for
         input(opHypergeometricF, inhyper@((List INP) -> INP))
 
         inmeijer(lf : List INP) : INP ==
-            pqi := get__int__listi(4, lf)
-            al := get__if__lists(pqi, lf)
+            pqi := get_int_listi(4, lf)
+            al := get_if_lists(pqi, lf)
             lf := first(al)
             al := rest(al)
             a := first al
@@ -2493,19 +2540,19 @@ component of the gradient failed, it resulted in an infinite loop for
 ++ Date Created: ???
 ++ Date Last Updated: 19 April 1991
 ++ Description: computes sums of top-level expressions;
-FunctionSpaceSum(R, F): Exports == Implementation where
-  R: Join(IntegralDomain, Comparable,
+FunctionSpaceSum(R, F) : Exports == Implementation where
+  R : Join(IntegralDomain, Comparable,
           RetractableTo Integer, LinearlyExplicitRingOver Integer)
-  F: Join(FunctionSpace R, CombinatorialOpsCategory,
+  F : Join(FunctionSpace R, CombinatorialOpsCategory,
           AlgebraicallyClosedField, TranscendentalFunctionCategory)
 
   SE  ==> Symbol
   K   ==> Kernel F
 
   Exports ==> with
-    sum: (F, SE) -> F
+    sum : (F, SE) -> F
       ++ sum(a(n), n) returns A(n) such that A(n+1) - A(n) = a(n);
-    sum: (F, SegmentBinding F) -> F
+    sum : (F, SegmentBinding F) -> F
       ++ sum(f(n), n = a..b) returns f(a) + f(a+1) + ... + f(b);
 
   Implementation ==> add
@@ -2513,18 +2560,18 @@ FunctionSpaceSum(R, F): Exports == Implementation where
     import GosperSummationMethod(IndexedExponents K, K, R,
                                  SparseMultivariatePolynomial(R, K), F)
 
-    innersum: (F, K) -> Union(F, "failed")
+    innersum : (F, K) -> Union(F, "failed")
     notRF?  : (F, K) -> Boolean
     newk    : () -> K
 
     newk() == kernel(new()$SE)
 
-    sum(x:F, s:SegmentBinding F) ==
+    sum(x : F, s : SegmentBinding F) ==
       k := kernel(variable s)@K
       (u := innersum(x, k)) case "failed" => summation(x, s)
       eval(u::F, k, 1 + hi segment s) - eval(u::F, k, lo segment s)
 
-    sum(x:F, v:SE) ==
+    sum(x : F, v : SE) ==
       (u := innersum(x, kernel(v)@K)) case "failed" => summation(x,v)
       u::F
 

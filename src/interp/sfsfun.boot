@@ -46,7 +46,7 @@ fracpart(x) ==
         CADR(MULTIPLE_-VALUE_-LIST(FLOOR(x)))
 
 intpart(x) ==
-        CAR(MULTIPLE_-VALUE_-LIST(FLOOR(x)))
+        first(MULTIPLE_-VALUE_-LIST(FLOOR(x)))
 
 negintp(x) ==
         if ZEROP IMAGPART(x) and x<0.0 and ZEROP fracpart(x)
@@ -124,7 +124,7 @@ gammaRatapprox (x) ==
                  else
                         Pi := dfPi
                         lx := MULTIPLE_-VALUE_-LIST(FLOOR(x))
-                        intpartx := CAR(lx)+1
+                        intpartx := first(lx)+1
                         restx := CADR(lx)
                         if ZEROP restx  -- case of negative non-integer value
                         then
@@ -781,7 +781,7 @@ besselIback(v,z) ==
         ipv := IMAGPART(v)
         rpv := REALPART(v)
         lm := MULTIPLE_-VALUE_-LIST(FLOOR(rpv))
-        m := CAR(lm)    --- floor of real part of v
+        m := first(lm)    --- floor of real part of v
         n := 2*MAX(20,m+10)  --- how large the back recurrence should be
         tv := CADR(lm)+(v-rpv) ---  fractional part of real part of v
                         --- plus imaginary part of v
@@ -897,7 +897,7 @@ BesselIAsympt(v,z,n) ==
 ---Expansion good for 0<=phase(v)<Pi
 ---A&S recommend "uniform expansion" with complicated coefficients and Airy function.
 ---Debye's Formula is in 9.3.7,9.3.9,9.3.10 of A&S
----AXIOM recurrence for u_{k}
+---FriCAS recurrence for u_{k}
 ---f(0)==1::EXPR INT
 ---f(n)== (t^2)*(1-t^2)*D(f(n-1),t)/2 + (1/8)*integrate( (1-5*t^2)*f(n-1),t)
 BesselJAsymptOrder(v,z) ==
@@ -975,7 +975,7 @@ BesselKAsymptOrder (v,vz) ==
 
 
 -- Conversion between spad and lisp complex representations
-s_to_c(c) == COMPLEX(CAR c, CDR c)
+s_to_c(c) == COMPLEX(first c, CDR c)
 c_to_s(c) == CONS(REALPART c, IMAGPART c)
 c_to_r(c) ==
     r := REALPART c

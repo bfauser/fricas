@@ -51,6 +51,10 @@ newGoGet(:l) ==
   slot := replaceGoGetSlot env
   APPLY(first slot,[:arglist,rest slot])  --SPADCALL it!
 
+forceLazySlot(f) ==
+    not(EQ(first f, function newGoGet)) => f
+    replaceGoGetSlot(rest f)
+
 --=======================================================
 --       Lookup Function in Slot 1 (via SPADCALL)
 --=======================================================
@@ -88,7 +92,7 @@ newLookupInTable(op,sig,dollar,[domain,opvec],flag) ==
       i := start
       numArgs ~= (numTableArgs :=numvec.i) => nil
       predIndex := numvec.(i := inc_SI i)
-      NE(predIndex,0) and null testBitVector(predvec,predIndex) => nil
+      predIndex ~= 0 and null testBitVector(predvec, predIndex) => nil
       loc := newCompareSig(sig, numvec, (i := inc_SI i), dollar, domain)
       null loc => nil  --signifies no match
       loc = 1 => (someMatch := true)
@@ -116,7 +120,7 @@ newLookupInTable(op,sig,dollar,[domain,opvec],flag) ==
         return (success := newLookupInAddChain(op,sig,domain,dollar))
       systemError '"unexpected format"
     start := add_SI(start, add_SI(numTableArgs, 4))
-  NE(success,'failed) and success =>
+  success ~= 'failed and success =>
     if $monitorNewWorld then
       sayLooking1('"<----",uu) where uu ==
         PAIRP success => [first success,:devaluate rest success]
@@ -140,7 +144,7 @@ newLookupInAddChain(op,sig,addFormDomain,dollar) ==
   addFunction =>
     if $monitorNewWorld then
       sayLooking1(concat('"<----add-chain function found for ",
-        form2String devaluate addFormDomain,'"<----"),CDR addFunction)
+        form2String devaluate addFormDomain, '"<----"), rest addFunction)
     addFunction
   nil
 
@@ -149,7 +153,7 @@ newLookupInAddChain(op,sig,addFormDomain,dollar) ==
 --=======================================================
 newLookupInDomain(op,sig,addFormDomain,dollar,index) ==
   addFormCell := addFormDomain.index =>
-    INTEGERP KAR addFormCell =>
+    INTEGERP IFCAR addFormCell =>
       or/[newLookupInDomain(op,sig,addFormDomain,dollar,i) for i in addFormCell]
     if null VECP addFormCell then lazyDomainSet(addFormCell,addFormDomain,index)
     lookupInDomainVector(op,sig,addFormDomain.index,dollar)
@@ -162,7 +166,7 @@ newLookupInCategories(op,sig,dom,dollar) ==
   slot4 := dom.4
   catVec := CADR slot4
   SIZE catVec = 0 => nil                      --early exit if no categories
-  INTEGERP KDR catVec.0 =>
+  INTEGERP IFCDR catVec.0 =>
     BREAK()
     newLookupInCategories1(op,sig,dom,dollar) --old style
   $lookupDefaults : local := nil
@@ -195,7 +199,7 @@ newLookupInCategories(op,sig,dom,dollar) ==
             not nrunNumArgCheck(#(QCDR sig),byteVector,opvec.code,endPos) => nil
             --numOfArgs := byteVector.(opvec.code)
             --numOfArgs ~= #(QCDR sig) => nil
-            packageForm := [entry,'$,:CDR cat]
+            packageForm := [entry, '$, :rest cat]
             package := evalSlotDomain(packageForm,dom)
             packageVec.i := package
             package
@@ -231,11 +235,11 @@ newLookupInCategories1(op,sig,dom,dollar) ==
     form2String devaluate dom,'"-----> searching default packages for ",op)
   predvec := dom.3
   slot4 := dom.4
-  packageVec := CAR slot4
-  catVec := CAR QCDR slot4
+  packageVec := first slot4
+  catVec := first QCDR slot4
   nsig := substitute(dom.0, dollar.0, sig)
   for i in 0..MAXINDEX packageVec | (entry := ELT(packageVec,i))
-      and (VECP entry or (predIndex := CDR (node := ELT(catVec,i))) and
+      and (VECP entry or (predIndex := rest(node := ELT(catVec, i))) and
           (EQ(predIndex,0) or testBitVector(predvec,predIndex))) repeat
     package :=
       VECP entry =>
@@ -256,7 +260,7 @@ newLookupInCategories1(op,sig,dom,dollar) ==
             byteVector := CDDR infovec.3
             numOfArgs := byteVector.(opvec.code)
             numOfArgs ~= #(QCDR sig) => nil
-            packageForm := [entry,'$,:CDR cat]
+            packageForm := [entry, '$, :rest cat]
             package := evalSlotDomain(packageForm,dom)
             packageVec.i := package
             package
@@ -328,8 +332,8 @@ newCompareSig(sig, numvec, index, dollar, domain) ==
 lazyMatchArg(s,a,dollar,domain) == lazyMatchArg2(s,a,dollar,domain,true)
 
 lazyMatch(source,lazyt,dollar,domain) ==
-  lazyt is [op,:argl] and null atom source and op=CAR source
-    and #(sargl := CDR source) = #argl =>
+  lazyt is [op, :argl] and null atom source and op = first source
+    and #(sargl := rest source) = #argl =>
       MEMQ(op,'(Record Union)) and first argl is [":",:.] =>
         and/[stag = atag and lazyMatchArg(s,a,dollar,domain)
               for [.,stag,s] in sargl for [.,atag,a] in argl]
@@ -362,7 +366,7 @@ lazyMatchArgDollarCheck(s,d,dollarName,domainName) ==
     x = '$ and (arg = dollarName or arg = domainName) => true
     x = dollarName and arg = domainName => true
     ATOM x or ATOM arg => false
-    xt and CAR x = CAR arg =>
+    xt and first x = first arg =>
       lazyMatchArgDollarCheck(x,arg,dollarName,domainName)
     false
 
@@ -384,11 +388,12 @@ lookupInDomainByName(op,domain,arg) ==
     i := start
     numberOfArgs :=numvec.i
     predIndex := numvec.(i := inc_SI i)
-    NE(predIndex,0) and null testBitVector(predvec,predIndex) => nil
+    predIndex ~= 0 and null testBitVector(predvec, predIndex) => nil
     slotIndex := numvec.(i + 2 + numberOfArgs)
     newStart := add_SI(start, add_SI(numberOfArgs, 4))
     slot := domain.slotIndex
-    null atom slot and EQ(CAR slot,CAR arg) and EQ(CDR slot,CDR arg) => return (success := true)
+    null atom slot and EQ(first slot, first arg) and EQ(rest slot, rest arg) =>
+        return (success := true)
     start := add_SI(start, add_SI(numberOfArgs, 4))
   success
 
@@ -488,7 +493,8 @@ newHasTest(domform,catOrAtt) ==
                   l is [ w1,['ATTRIBUTE,w2]] =>
                        BREAK()
                        newHasTest(w1,w2)
-                  l is [ w1,['SIGNATURE,:w2]] => compiledLookup(CAR w2,CADR w2, eval mkEvalable w1)
+                  l is [ w1, ['SIGNATURE, :w2]] =>
+                      compiledLookup(first w2, CADR w2, eval mkEvalable w1)
                   newHasTest(first  l ,first rest l)
              pred = 'OR => or/[evalCond i for i in l]
              pred = 'AND => and/[evalCond i for i in l]

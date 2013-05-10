@@ -100,24 +100,17 @@
 
 (def-boot-var |$postStack|                          "???")
 (def-boot-var |$previousTime|                       "???")
-(def-boot-val |$printLoadMsgs|  '|off|          "Interpreter>SetVarT.boot")
+(def-boot-val |$printLoadMsgs|  nil          "Interpreter>SetVarT.boot")
 (def-boot-var |$PrintOnly|                          "Compiler>LispLib.boot")
 (def-boot-var |$reportBottomUpFlag|                 "Interpreter>SetVarT.boot")
-(def-boot-var |$reportFlag|                         "Interpreter>SetVars.boot")
 (def-boot-var |$returnMode|                         "???")
 (def-boot-var |$semanticErrorStack|                 "???")
 (def-boot-val |$SetFunctions| nil  "checked in SetFunctionSlots")
 
-(def-boot-val $SPAD nil                             "Is this Spad code?")
-
 (def-boot-val |$timerOn| t                          "???")
 (def-boot-var |$topOp|                             "See displayPreCompilationErrors")
-(def-boot-val |$traceDomains| t                      "enables domain tracing")
-(def-boot-val |$TraceFlag| t                        "???")
 (def-boot-var |$tracedSpadModemap|                  "Interpreter>Trace.boot")
 (def-boot-var |$traceletFunctions|                  "???")
-(def-boot-var |$traceNoisely|                       "Interpreter>Trace.boot")
-(def-boot-var |$TranslateOnly|                      "???")
 
 (def-boot-var |$warningStack|                       "???")
 (def-boot-val |$whereList| () "referenced in format boot formDecl2String")
@@ -127,14 +120,8 @@
 
 ; End of moved fragment
 
-
 (defvar |$compilingMap| ())
 (defvar |$definingMap| nil)
-
-(defmacro KAR (ARG) `(ifcar ,arg))
-(defmacro KDR (ARG) `(ifcdr ,arg))
-(defmacro KADR (ARG) `(ifcar (ifcdr ,arg)))
-(defmacro KADDR (ARG) `(ifcar (ifcdr (ifcdr ,arg))))
 
 ; 5 PROGRAM STRUCTURE
 
@@ -150,9 +137,6 @@
        (if *FILEACTQ-APPLY* (FUNCALL *FILEACTQ-APPLY* name form)))
 
 ; 5.3.2 Declaring Global Variables and Named Constants
-
-(defmacro |function| (name) `(FUNCTION ,name))
-(defmacro |dispatchFunction| (name) `(FUNCTION ,name))
 
 (defun |functionp| (fn)
    (if (identp fn) (and (fboundp fn) (not (macro-function fn))) (functionp fn)))
@@ -338,19 +322,6 @@
 
 (defun LEXLESSEQP (X Y) (NOT (LEXGREATERP X Y)))
 
-; 6.3 Equality Predicates
-
-;;; -----------------------
-
-;; qeqcar should be used when you know the first arg is a pair
-;; the second arg should either be a literal fixnum or a symbol
-;; the car of the first arg is always of the same type as the second
-;; use eql unless we are sure fixnums are represented canonically
-
-(defmacro qeqcar (x y)
-    (if (integerp y) `(eql (the fixnum (qcar ,x)) (the fixnum ,y))
-         `(eq (qcar ,x) ,y)))
-
 ; 7 CONTROL STRUCTURE
 
 ; 7.1 Constants and Variables
@@ -361,6 +332,7 @@
   "Evaluates an object and returns it with QUOTE wrapped around it."
   (if (NUMBERP X) X (LIST 'QUOTE X)))
 
+<<<<<<< HEAD
 ; 7.2 Generalized Variables
 
 
@@ -479,9 +451,9 @@
                  (CONS (if (cdr L) (cons 'CONS L) (car L)))
                  (t (CONS OP L) ))))
 
+=======
+>>>>>>> upstream/master
 (defvar $TRACELETFLAG NIL "Also referred to in Comp.Lisp")
-
-(defvar $BOOT NIL)
 
 ; 10.1 The Property List
 
@@ -494,10 +466,6 @@
 (DEFUN FLAGP (X KEY)
   "If X has a KEY property, then FLAGP is true."
   (GET X KEY))
-
-(defun PROPERTY (X IND N)
-  "Returns the Nth element of X's IND property, if it exists."
-  (let (Y) (if (AND (INTEGERP N) (SETQ Y (GET X IND)) (>= (LENGTH Y) N)) (ELEM Y N))))
 
 ; 10.3 Creating Symbols
 
@@ -518,13 +486,9 @@
 ; 14.2 Concatenating, Mapping, and Reducing Sequences
 
 (MAPC #'(LAMBDA (X) (MAKEPROP (CAR X) 'THETA (CDR X)))
-      '((PLUS 0) (+ (|Zero|)) (|lcm| (|One|)) (STRCONC "") (|strconc| "")
-        (MAX -999999) (MIN 999999) (TIMES 1) (* (|One|)) (CONS NIL)
-        (APPEND NIL) (|append| NIL) (UNION NIL) (UNIONQ NIL) (|gcd| (|Zero|))
-        (|union| NIL) (NCONC NIL) (|and| |true|) (|or| |false|) (AND 'T)
-        (OR NIL)))
-
-(define-function '|append| #'APPEND)
+      '((+ (|Zero|)) (|lcm| (|One|)) (|strconc| "") (* (|One|)) 
+        (|append| NIL) (|gcd| (|Zero|))
+        (|union| NIL) (|and| |true|) (|or| |false|) ))
 
 (defun |delete| (item sequence)
    (cond ((symbolp item) (remove item sequence :test #'eq))
@@ -533,20 +497,7 @@
 
 ; 15 LISTS
 
-; 15.1 Conses
-
-
-(defmacro |SPADfirst| (l)
-  (let ((tem (gensym)))
-    `(let ((,tem ,l)) (if ,tem (car ,tem) (first-error)))))
-
-(defun first-error () (error "Cannot take first of an empty list"))
-
 ; 15.2 Lists
-
-
-(defmacro ELEM (val &rest indices)
-   (if (null indices) val `(ELEM (nth (1- ,(car indices)) ,val) ,@(cdr indices))))
 
 (defun ELEMN (X N DEFAULT)
   (COND ((NULL X) DEFAULT)
@@ -559,8 +510,6 @@
         ((NCONC (LISTOFATOMS (CAR X)) (LISTOFATOMS (CDR X))))))
 
 (DEFUN LASTATOM (L) (if (ATOM L) L (LASTATOM (CDR L))))
-
-(define-function 'LASTTAIL #'last)
 
 (defun DROP (N X &aux m)
   "Return a pointer to the Nth cons of X, counting 0 as the first cons."
@@ -576,17 +525,10 @@
         ((>= (setq m (+ (length x) N)) 0) (DROP m x))
         ((CROAK (list "Bad args to DROP" N X)))))
 
-(DEFUN TRUNCLIST (L TL) "Truncate list L at the point marked by TL."
-  (let ((U L)) (TRUNCLIST-1 L TL) U))
-
-(DEFUN TRUNCLIST-1 (L TL)
-  (COND ((ATOM L) L)
-        ((EQL (CDR L) TL) (RPLACD L NIL))
-        ((TRUNCLIST-1 (CDR L) TL))))
-
 ; 15.4 Substitution of Expressions
 
-(DEFUN SUBSTEQ (NEW OLD FORM)
+;; needed for substNames (always copy)
+(DEFUN SUBSTQ (NEW OLD FORM)
   "Version of SUBST that uses EQ rather than EQUAL on the world."
   (PROG (NFORM HNFORM ITEM)
         (SETQ HNFORM (SETQ NFORM (CONS () ())))
@@ -594,16 +536,12 @@
                    (COND ((EQ FORM OLD) (SETQ FORM ()) NEW )
                          ((NOT (PAIRP FORM)) FORM )
                          ((EQ (SETQ ITEM (CAR FORM)) OLD) (CONS NEW ()) )
-                         ((PAIRP ITEM) (CONS (SUBSTEQ NEW OLD ITEM) ()) )
+                         ((PAIRP ITEM) (CONS (SUBSTQ NEW OLD ITEM) ()) )
                          ((CONS ITEM ()))))
         (if (NOT (PAIRP FORM)) (RETURN (CDR HNFORM)))
         (SETQ NFORM (CDR NFORM))
         (SETQ FORM (CDR FORM))
         (GO LP)))
-
-;; needed for substNames (always copy)
-(define-function 'SUBSTQ #'SUBSTEQ)
-
 
 (DEFUN SUBLISNQ (KEY E) (declare (special KEY)) (if (NULL KEY) E (SUBANQ E)))
 
@@ -708,8 +646,6 @@
 ; (defun QLASSQ (p a-list) (let ((y (assoc p a-list :test #'eq))) (if y (cdr y))))
 (defun QLASSQ (p a-list) (cdr (assq p a-list)))
 
-(define-function 'LASSQ #'QLASSQ)
-
 (defun pair (x y) (mapcar #'cons x y))
 
 ;;; Operations on Association Sets (AS)
@@ -721,11 +657,6 @@
                  (setf (cdr pp) B)
                  L))
          (cons (cons A B) L)))
-
-; 17 ARRAYS
-
-(defmacro |replaceString| (result part start)
-    `(replace ,result ,part :start1 ,start))
 
 ; 22 INPUT/OUTPUT
 
@@ -816,39 +747,8 @@
 
 ; 25 MISCELLANEOUS FEATURES
 
-;; range tests and assertions
-
-(defmacro |assert| (x y) `(IF (NULL ,x) (|error| ,y)))
-
-(defun coerce-failure-msg (val mode)
-   (STRCONC (MAKE-REASONABLE (STRINGIMAGE val))
-            " cannot be coerced to mode "
-            (STRINGIMAGE (|devaluate| mode))))
-
-(defmacro |check-subtype| (pred submode val)
-   `(|assert| ,pred (coerce-failure-msg ,val ,submode)))
-
-(defmacro |check-union| (pred branch val)
-   `(|assert| ,pred (coerce-failure-msg ,val ,branch )))
-
 (defun MAKE-REASONABLE (Z)
    (if (> (length Z) 30) (CONCAT "expression beginning " (subseq Z 0 20)) Z))
-
-
-(defmacro |elapsedUserTime| () '(get-internal-run-time))
-
-#+:GCL
-(defmacro |elapsedGcTime| () '(system:gbc-time))
-#-:GCL
-(defmacro |elapsedGcTime| () '0)
-
-(defmacro |do| (&rest args) (CONS 'PROGN args))
-
-(defmacro |char| (arg)
-  (cond ((stringp arg) (character arg))
-        ((integerp arg) (code-char arg))
-        ((and (consp arg) (eq (car arg) 'quote)) (character (cadr arg)))
-        (t `(character ,arg))))
 
 (defun DROPTRAILINGBLANKS  (LINE)
      (let ((l (length LINE)))
@@ -857,15 +757,9 @@
              (string-right-trim " " LINE)
              LINE)))
 
-; # Gives the number of elements of a list, 0 for atoms.
-; If we quote it, then an interpreter trip is necessary every time
-; we call #, and this costs us - 4% in the RATINT DEMO."
-
-(define-function '\# #'SIZE)
-
 (defun print-and-eval-defun (name body)
    (eval body)
-   (print-defun name body)
+   (|print_defun| name body)
    )
 
 (defun eval-defun (name body) (eval (macroexpandall body)))
@@ -929,19 +823,17 @@
 (defun |make_BF| (MT EP) (LIST |$BFtag| MT EP))
 
 (defun |make_float| (int frac fraclen exp)
-    (if (AND $SPAD |$useBFasDefault|)
-        (if (= frac 0)
+    (if (= frac 0)
           (|make_BF| int exp)
-          (|make_BF| (+ (* int (expt 10 fraclen)) frac) (- exp fraclen)) )
-        (read-from-string
-          (format nil "~D.~v,'0De~D" int fraclen frac exp))) )
+          (|make_BF| (+ (* int (expt 10 fraclen)) frac) (- exp fraclen)) ))
 
-(defun print-full (expr &optional (stream *standard-output*))
+(defun |print_full2| (expr stream)
    (let ((*print-circle* t) (*print-array* t) *print-level* *print-length*)
      (print expr stream)
      (terpri stream)
      (finish-output stream)))
 
+<<<<<<< HEAD
 ;; moved here from spad.lisp
 
 (defmacro |rplac| (&rest L)
@@ -961,6 +853,9 @@
            ((EQCAR A 'CAR) (LIST 'RPLACA (CADR A) B))
            ((EQCAR A 'CDR) (LIST 'RPLACD (CADR A) B))
            ((ERROR 'RPLAC))))))))
+=======
+(defun |print_full1| (expr) (|print_full2| expr *standard-output*))
+>>>>>>> upstream/master
 
 ;; moved here from preparse.lisp
 
@@ -991,6 +886,18 @@
                   (concatenate 'string
                                (make-string tpos :initial-element #\space)
                                (subseq str bpos))))
+        (loop
+            (let ((tloc (tabloc str)))
+                (if (null tloc) (return))
+                (let ((rloc (NEXT-TAB-LOC tloc)))
+                    (if (eql tloc rloc)
+                        (setf (aref str tloc) #\Space)
+                        (setf str
+                            (concatenate 'string
+                                (subseq str 0 tloc)
+                                (make-string (+ 1 (- rloc tloc))
+                                    :initial-element #\space)
+                                (subseq str (+ 1 tloc))))))))
          ;; remove dos CR
         (let ((lpos (maxindex str)))
           (if (eq (char str lpos) #\Return) (subseq str 0 lpos) str)))
@@ -999,6 +906,10 @@
 (defun blankp (char) (or (eq char #\Space) (eq char #\tab)))
 
 (defun nonblankloc (str) (position-if-not #'blankp str))
+
+(defun tabp (c) (equal c #\tab))
+
+(defun tabloc (str) (position-if #'tabp str))
 
 ;; stream handling for paste-in generation
 
@@ -1013,8 +924,7 @@
     (declare (special curoutstream
                       |$algebraOutputStream|))
     (setq val (catch 'spad_reader
-                (catch 'TOP_LEVEL
-                  (apply (symbol-function func) args))))
+                  (apply (symbol-function func) args)))
     (cons val (get-output-stream-string *standard-output*))))
 
 (defun |breakIntoLines| (str)
@@ -1040,7 +950,7 @@
   (let ((|$comp370_apply|
          (if |$InteractiveMode|
              (if |$compileDontDefineFunctions| #'compile-defun #'eval-defun)
-           #'print-defun))
+           #'|print_defun|))
      ;; following creates a null outputstream if $InteractiveMode
         (*standard-output*
          (if |$InteractiveMode| (make-broadcast-stream)

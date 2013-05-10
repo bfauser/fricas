@@ -2,6 +2,7 @@
 
 DEFPARAMETER($ParseMode, NIL)
 DEFPARAMETER($LABLASOC, NIL)
+DEFVAR($NONBLANK, nil)
 
 
 -- PURPOSE: This file sets up properties which are used by the Boot lexical
@@ -41,12 +42,12 @@ DEFPARAMETER($LABLASOC, NIL)
 
 MAKEOP(X, Y) ==
     if OR(NOT (CDR X), NUMBERP (SECOND X)) then
-        X := CONS(FIRST X, X)
-    MAKEPROP(FIRST X, Y, X)
+        X := CONS(first X, X)
+    MAKEPROP(first X, Y, X)
 
 init_parser_properties() ==
     for j in _
-         [["*", 800, 801],   ["rem", 800, 801],   ["mod", 800, 801], _
+         [["*", 800, 801],   ["rem", 800, 801], _
           ["quo", 800, 801], _
           ["/", 800, 801],    ["**", 901, 900],  ["^", 901, 900], _
           ["exquo", 800, 801], ["+", 700, 701], _
@@ -65,8 +66,6 @@ init_parser_properties() ==
           ["add", 400, 120],   ["with", 2000, 400, ["parse_InfixWith"]], _
           ["has", 400, 400], _
           ["where", 121, 104], _
-          ["when", 112, 190], _
-          ["otherwise", 119, 190, ["parse_Suffix"]], _
           ["is", 400, 400],    ["isnt", 400, 400], _
           ["and", 250, 251],   ["or", 200, 201], _
           ["/\", 250, 251],   ["\/", 200, 201], _
@@ -85,24 +84,18 @@ init_parser_properties() ==
           ["until", 130, 190, ["parse_Loop"]], _
           ["repeat", 130, 190, ["parse_Loop"]], _
           ["import", 120, 0, ["parse_Import"]], _
-          ["unless"], _
           ["add", 900, 120], _
           ["with", 1000, 300, ["parse_With"]], _
           ["has", 400, 400], _
           ["-", 701, 700], _
           ["#", 999, 998], _
-          ["!", 1002, 1001], _
           ["'", 999, 999, ["parse_Data"]], _
-          ["<<", 122, 120, ["parse_LabelExpr"]], _
-          [">>"], _
           ["->", 1001, 1002], _
           [":", 194, 195], _
           ["not", 260, 259, NIL], _
           ["~", 260, 259, nil], _
           ["=", 400, 700], _
           ["return", 202, 201, ["parse_Return"]], _
-          ["leave", 202, 201, ["parse_Leave"]], _
-          ["exit", 202, 201, ["parse_Exit"]], _
           ["from"], _
           ["iterate"], _
           ["yield"], _
@@ -111,18 +104,38 @@ init_parser_properties() ==
           ["catch", 0, 114], _
           ["finally", 0, 114], _
           ["|", 0, 190], _
-          ["suchthat"], _
           ["then", 0, 114], _
           ["else", 0, 114]] repeat
         MAKEOP(j, "Nud")
 
 init_parser_properties()
 
+-- Parsing functions return true if successful or false if not.
+-- If successful the result is left on the reduction stack.
+
+-- Signal error if not successful.  Used for mandatory elements
+-- in the grammar.
+MUST(x) ==
+    x => true
+    spad_syntax_error(nil, nil)
+
+-- Return successfuly regardless of status of x.  Used for
+-- optional elements in the grammar.  Code matching 'x' must
+-- preserve number of elements on the eduction stack.
+OPTIONAL(x) == true
+
+-- The same as OPTIONAL, but used for actions.
+ACTION(x) == true
+
 symbol_is?(x) == EQ(current_symbol(), x)
 
 match_symbol(x) ==
-    symbol_is?(x) => (advance_token(); true)
+    match_current_token("KEYWORD", x) => (advance_token(); true)
     false
+
+expect_symbol(x) ==
+    match_symbol(x) => true
+    spad_syntax_error(x, nil)
 
 DEFPARAMETER($reduction_stack, nil)
 
@@ -146,7 +159,7 @@ pop_stack_3() ==
     PUSH(el1, $reduction_stack)
     el3
 
-top_of_stack() == CAR($reduction_stack)
+top_of_stack() == first($reduction_stack)
 
 parse_token(token) ==
     tok := match_current_token(token, nil)
@@ -214,15 +227,42 @@ repetition(delimiter, fn) ==
     val => push_lform0(nreverse(val))
     nil
 
+getSignatureDocumentation2(n1, n2) ==
+    val1 := getSignatureDocumentation(n1) => val1
+    not(n2) =>
+        $COMBLOCKLIST is [[n, :val], :rr] and n1 <= n =>
+            $COMBLOCKLIST := rr
+            val
+        nil
+    nr := n2 + 1
+    for pp in $COMBLOCKLIST repeat
+        if pp is [n, :val] and n1 <= n and n <= n2 then
+            nr := n
+    nr <= n2 => getSignatureDocumentation(nr)
+    nil
+
 -- category : if expression then category [else category]
 --          | '(' category* ')'
 --          | application [':' expression]
 --          ;
+
+parse_category_list(closer) ==
+    MUST
+        match_symbol(closer) => push_form0("CATEGORY")
+        MUST(parse_Category())
+        tail_val :=
+            repetition(";", FUNCTION parse_Category) => pop_stack_1()
+            nil
+        expect_symbol(closer)
+        val1 := pop_stack_1()
+        IFCAR(val1) = "if" and tail_val = nil => push_lform0(val1)
+        push_lform2("CATEGORY", val1, tail_val)
+
 parse_Category() ==
-    match_symbol "if" =>
+    match_symbol("if") =>
         MUST parse_Expression()
         cond := pop_stack_1()
-        MUST match_symbol "then"
+        expect_symbol "then"
         MUST parse_Category()
         else_val :=
             match_symbol "else" =>
@@ -230,33 +270,16 @@ parse_Category() ==
                 pop_stack_1()
             nil
         push_form3("if", cond, pop_stack_1(), else_val)
-    match_symbol "(" =>
-        MUST
-            match_symbol ")" => push_form0("CATEGORY")
-            MUST(parse_Category())
-            tail_val :=
-                repetition(";", FUNCTION parse_Category) => pop_stack_1()
-                nil
-            MUST match_symbol ")"
-            val1 := pop_stack_1()
-            KAR(val1) = "if" and tail_val = nil => push_lform0(val1)
-            push_lform2("CATEGORY", val1, tail_val)
-    match_symbol "{" =>
-        MUST
-            match_symbol "}" => push_form0("CATEGORY")
-            MUST(parse_Category())
-            tail_val :=
-                repetition(";", FUNCTION parse_Category) => pop_stack_1()
-                nil
-            MUST match_symbol "}"
-            push_lform2("CATEGORY", pop_stack_1(), tail_val)
-    G1 := LINE_-NUMBER CURRENT_-LINE
+    match_symbol("(") => parse_category_list(")")
+    match_symbol("{") => parse_category_list("}")
+    match_symbol("SETTAB") => parse_category_list("BACKTAB")
+    G1 := current_line_number()
     not(parse_Application()) => nil
     MUST
         OR(
               AND(match_symbol ":", MUST parse_Expression(),
                   push_form3("Signature", pop_stack_2(), pop_stack_1(),
-                             getSignatureDocumentation(G1))),
+                      getSignatureDocumentation2(G1, current_line_number()))),
               AND(push_form1("Attribute", pop_stack_1()),
                   ACTION recordAttributeDocumentation(top_of_stack(), G1)))
 
@@ -273,6 +296,7 @@ parse_Expr1000() == parse_Expr 1000
 -- import : 'import' expr_1000 [',' expr_1000]*
 parse_Import() ==
     not(match_symbol "import") => nil
+    match_symbol "from" or true
     MUST parse_Expr 1000
     tail_val :=
         repetition(",", FUNCTION parse_Expr1000) => pop_stack_1()
@@ -301,7 +325,7 @@ parse_Suffix() ==
     push_reduction("parse_Suffix", [pop_stack_1(), pop_stack_1()])
 
 parse_TokTail() ==
-    $BOOT or current_symbol() ~= "$" => nil
+    current_symbol() ~= "$" => nil
     not(OR(match_next_token("IDENTIFIER", NIL), next_symbol() = "%",
            next_symbol() = "(")) => nil                     -- )
     G1 := COPY_-TOKEN PRIOR_-TOKEN
@@ -325,19 +349,6 @@ parse_Return() ==
     MUST parse_Expression()
     push_form1("return", pop_stack_1())
 
-parse_Exit() ==
-    not(match_symbol "exit") => nil
-    OR(parse_Expression(), push_reduction("parse_Exit", "$NoValue"))
-    push_form1("exit", pop_stack_1())
-
-parse_Leave() ==
-    not(match_symbol "leave") => nil
-    OR(parse_Expression(), push_reduction("parse_Leave", "$NoValue"))
-    match_symbol "from" =>
-        MUST parse_Label()
-        push_form2("leaveFrom", pop_stack_1(), pop_stack_1())
-    push_form1("leave", pop_stack_1())
-
 parse_Seg() ==
     not(parse_GliphTok "..") => nil
     right_val :=
@@ -348,7 +359,7 @@ parse_Seg() ==
 parse_Conditional() ==
     not(match_symbol "if") => nil
     MUST parse_Expression()
-    MUST match_symbol "then"
+    expect_symbol "then"
     MUST parse_Expression()
     else_val :=
         match_symbol "else" =>
@@ -382,15 +393,15 @@ parse_Try() ==
 
 parse_Loop() ==
     OR(AND(repetition(nil, FUNCTION parse_Iterator),
-           MUST match_symbol "repeat", MUST parse_Expr 110,
+           expect_symbol "repeat", MUST parse_Expr 110,
            push_lform1("REPEAT", [:pop_stack_2(), pop_stack_1()])),
-       AND(match_symbol "repeat", MUST parse_Expr 110,
+       AND(expect_symbol "repeat", MUST parse_Expr 110,
            push_form1("REPEAT", pop_stack_1())))
 
 parse_Iterator() ==
     match_symbol "for" =>
         MUST parse_Primary()
-        MUST match_symbol "in"
+        expect_symbol "in"
         MUST parse_Expression()
         by_val :=
               AND(match_symbol "by", MUST parse_Expr 200) => pop_stack_1()
@@ -454,7 +465,7 @@ parse_rightBindingPowerOf(x, ind) ==
     105
 
 parse_getSemanticForm(ind, y) ==
-    AND(y, FUNCALL(CAR y)) => true
+    AND(y, FUNCALL(first y)) => true
     ind = "Nud" => parse_Prefix()
     ind = "Led" => parse_Infix()
     nil
@@ -495,7 +506,6 @@ parse_Application() ==
 parse_Selector() ==
     not(match_symbol ".") => nil
     MUST parse_Primary()
-    $BOOT => push_form2("ELT", pop_stack_2(), pop_stack_1())
     push_reduction("parse_Selector",
                          [pop_stack_2(), pop_stack_1()])
 
@@ -508,40 +518,32 @@ parse_Primary1() ==
     OR(
        AND(parse_VarForm(),
            OPTIONAL AND(
-              NONBLANK, current_symbol() = "(", MUST parse_Enclosure(),
+              $NONBLANK, current_symbol() = "(", MUST parse_Enclosure(),
               push_reduction("parse_Primary1",
                              [pop_stack_2(), pop_stack_1()]))),
-       parse_Quad(), parse_String(), parse_IntegerTok(),
+       parse_String(), parse_IntegerTok(),
        parse_FormalParameter(),
        AND(symbol_is? "'",
-          MUST OR(
-             AND($BOOT, parse_Data()),
-             AND(match_symbol "'", MUST parse_Expr 999,
-                 push_form1("QUOTE", pop_stack_1())))),
+          MUST AND(match_symbol "'", MUST parse_Expr 999,
+                   push_form1("QUOTE", pop_stack_1()))),
        parse_Sequence(), parse_Enclosure())
 
 parse_Float() == parse_SPADFLOAT()
 
+parse_Enclosure1(closer) ==
+    MUST OR(
+            AND(parse_Expr 6, expect_symbol(closer)),
+            AND(expect_symbol(closer), push_form0("@Tuple")))
+
 parse_Enclosure() ==
-    match_symbol "(" =>
-        MUST OR(  -- (
-               AND(parse_Expr 6, MUST match_symbol ")"), -- (
-               AND(match_symbol ")",
-                   push_form0("@Tuple")))
-    match_symbol "{" =>
-        MUST OR(  -- {
-               AND(parse_Expr 6, MUST match_symbol "}"),
-               AND(match_symbol "}",
-                   push_form0("@Tuple")))
+    match_symbol "(" => parse_Enclosure1(")")
+    match_symbol "{" => parse_Enclosure1("}")
+    match_symbol "SETTAB" => parse_Enclosure1("BACKTAB")
     nil
 
 parse_IntegerTok() == parse_NUMBER()
 
 parse_FormalParameter() == parse_ARGUMENT_DESIGNATOR()
-
-parse_Quad() ==
-    OR(AND($BOOT, match_symbol "$", push_lform0("$")),
-       AND($BOOT, parse_GliphTok("."), push_lform0(".")))
 
 parse_String() == parse_SPADSTRING()
 
@@ -549,55 +551,9 @@ parse_VarForm() == parse_IDENTIFIER()
 
 parse_Name() == parse_IDENTIFIER()
 
-parse_Data() ==
-    AND(ACTION ($LABLASOC := NIL), parse_Sexpr(),
-        push_form1("QUOTE", TRANSLABEL(pop_stack_1(), $LABLASOC)))
-
-parse_Sexpr() == AND(ACTION(advance_token()), parse_Sexpr1())
-
-parse_Sexpr1() ==
-    parse_AnyId() =>
-        if parse_NBGliphTok "=" then
-            MUST parse_Sexpr1()
-            $LABLASOC := [[pop_stack_2(), :top_of_stack()], :$LABLASOC]
-        true
-    match_symbol "'" =>
-        MUST parse_Sexpr1()
-        push_form1("QUOTE", pop_stack_1())
-    parse_IntegerTok() => true
-    match_symbol "-" =>
-        MUST parse_IntegerTok()
-        push_reduction("parse_Sexpr1", MINUS pop_stack_1())
-    parse_String() => true
-    match_symbol "<" =>
-        seq_val :=
-            repetition(nil, FUNCTION parse_Sexpr1) => pop_stack_1()
-            nil
-        MUST match_symbol ">"
-        push_reduction("parse_Sexpr1", LIST2VEC(seq_val))
-    match_symbol "(" =>
-        if repetition(nil, FUNCTION parse_Sexpr1) then
-            OPTIONAL AND(
-                        parse_GliphTok ".", MUST parse_Sexpr1(),
-                        push_reduction("parse_Sexpr1",
-                                       NCONC(pop_stack_2(),
-                                             pop_stack_1())))
-        else
-            push_reduction("parse_Sexpr1", nil)
-        MUST match_symbol ")"
-    nil
-
-parse_NBGliphTok(tok) ==
-   AND(match_current_token("KEYWORD", tok),
-       NONBLANK,
-       ACTION(advance_token()))
-
-parse_AnyId() ==
-    OR(parse_IDENTIFIER(),
-       OR(AND(symbol_is? "$",
-              push_reduction("parse_AnyId", current_symbol()),
-              ACTION advance_token()),
-        parse_AKEYWORD()))
+parse_Data() == AND(ACTION(advance_token()),
+                    OR(parse_IDENTIFIER(), parse_KEYWORD()),
+                    push_form1("QUOTE", pop_stack_1()))
 
 parse_GliphTok(tok) ==
   AND(match_current_token('KEYWORD, tok), ACTION(advance_token()))
@@ -605,7 +561,7 @@ parse_GliphTok(tok) ==
 parse_Sequence() ==
     match_symbol "[" =>
         MUST(parse_Sequence1())
-        MUST(match_symbol "]")
+        expect_symbol "]"
     nil
 
 parse_Sequence1() ==

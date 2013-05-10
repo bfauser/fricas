@@ -435,7 +435,7 @@ htpSetLabelInputString(htPage, label, val) ==
 htDoneButton(func, htPage, :optionalArgs) ==
 ------> Handle argument values passed from page if present
   if optionalArgs then
-    htpSetInputAreaAlist(htPage,CAR optionalArgs)
+    htpSetInputAreaAlist(htPage, first optionalArgs)
   typeCheckInputAreas htPage =>
     htMakeErrorPage htPage
   NULL FBOUNDP func =>
@@ -589,7 +589,7 @@ kPage(line,:options) == --any cat, dom, package, default package
   signature       := ncParseFromString sig
   sourceFileName  := dbSourceFile INTERN name
   constrings      :=
-    KDR form => dbConformGenUnder form
+    IFCDR form => dbConformGenUnder form
     [STRCONC(name,args)]
   emString        := ['"{\sf ",:constrings,'"}"]
   heading := [capitalKind,'" ",:emString]
@@ -701,7 +701,7 @@ kPageContextMenuSaturn page ==
 
 saturnExampleLink lname ==
   htSay '"\docLink{\csname "
-  htSay STRCONC(CAR(CDR(lname)), '"\endcsname}{E&xamples}")
+  htSay STRCONC(first(rest(lname)), '"\endcsname}{E&xamples}")
 
 $exampleConstructors := nil
 
@@ -724,7 +724,7 @@ dbPresentCons(htPage,kind,:exclusions) ==
   htpSetProperty(htPage,'exclusion,first exclusions)
   cAlist := htpProperty(htPage,'cAlist)
   empty? := null cAlist
-  one?   := null CDR cAlist
+  one?   := null rest cAlist
   one? := empty? or one?
   exposedUnexposedFlag := $includeUnexposed? --used to be star?       4/92
   star?  := true     --always include information on exposed/unexposed   4/92
@@ -734,7 +734,8 @@ dbPresentCons(htPage,kind,:exclusions) ==
     then htSay '"{\em Abbreviations}"
     else htMakePage [['bcLispLinks,['"Abbreviations",'"",'dbShowCons,'abbrs]]]
   htSay '"}{"
-  if one? or member('conditions,exclusions) or and/[CDR x = true for x in cAlist]
+  if one? or member('conditions, exclusions) or
+        and/[rest x = true for x in cAlist]
     then htSay '"{\em Conditions}"
     else htMakePage [['bcLispLinks,['"Conditions",'"",'dbShowCons,'conditions]]]
   htSay '"}{"
@@ -742,7 +743,7 @@ dbPresentCons(htPage,kind,:exclusions) ==
     then htSay '"{\em Descriptions}"
     else htMakePage [['bcLispLinks,['"Descriptions",'"",'dbShowCons,'documentation]]]
   htSay '"}{"
-  if one? or null CDR cAlist
+  if one? or null rest cAlist
     then htSay '"{\em Filter}"
     else htMakePage
       [['bcLinks,['"Filter",'"",'htFilterPage,['dbShowCons,'filter]]]]
@@ -777,7 +778,7 @@ dbPresentConsSaturn(htPage,kind,exclusions) ==
   htpSetProperty(htPage,'exclusion,first exclusions)
   cAlist := htpProperty(htPage,'cAlist)
   empty? := null cAlist
-  one?   := null KDR cAlist
+  one?   := null IFCDR cAlist
   one? := empty? or one?
   exposedUnexposedFlag := $includeUnexposed? --used to be star?       4/92
   star?  := true     --always include information on exposed/unexposed   4/92
@@ -785,13 +786,14 @@ dbPresentConsSaturn(htPage,kind,exclusions) ==
   if one? or member('abbrs,exclusions)
     then htSayCold '"\&Abbreviations"
     else htMakePage [['bcLispLinks,['"\&Abbreviations",'"",'dbShowCons,'abbrs]]]
-  if one? or member('conditions,exclusions) or and/[CDR x = true for x in cAlist]
+  if one? or member('conditions, exclusions) or
+      and/[rest x = true for x in cAlist]
     then htSayCold '"\&Conditions"
     else htMakePage [['bcLispLinks,['"\&Conditions",'"",'dbShowCons,'conditions]]]
   if empty? or member('documentation,exclusions)
     then htSayCold '"\&Descriptions"
     else htMakePage [['bcLispLinks,['"\&Descriptions",'"",'dbShowCons,'documentation]]]
-  if one? or null CDR cAlist
+  if one? or null rest cAlist
     then htSayCold '"\&Filter"
     else htMakeSaturnFilterPage ['dbShowCons, 'filter]
   if one? or member('kinds,exclusions) or kind ~= 'constructor
@@ -878,10 +880,10 @@ addParameterTemplates(page, conform) ==
   htSaySaturn '"\colorbuttonbox{lightgray}{"
   htSay '"Optional argument value"
   htSay
-    CDR parlist => '"s:"
+    rest parlist => '"s:"
     '":"
   htSaySaturn '"}"
-  if CDR conform then htSaySaturn '"\newline{}"
+  if rest conform then htSaySaturn '"\newline{}"
   htSaySaturn '"\begin{tabular}{p{.25in}l}"
   firstTime := true
   odd := false
@@ -1016,7 +1018,7 @@ dbPresentOps(htPage,which,:exclusions) ==
     then htSay '"{\em Filter}"
     else htMakePage [['bcLinks,['"Filter ",'"",'htFilterPage,['dbShowOps,which,'filter]]]]
   htSay '"}{"
-  if one? or member('names,exclusions) or null KDR opAlist
+  if one? or member('names,exclusions) or null IFCDR opAlist
     then htSay '"{\em Names}"
     else htMakePage [['bcLispLinks,['"Names",'"",'dbShowOps,which,'names]]]
   if not star? then
@@ -1088,7 +1090,7 @@ dbPresentOpsSaturn(htPage,which,exclusions) ==
     then htSayCold '"\&Implementations"
     else htMakePage
       [['bcLispLinks,['"\&Implementations",'"",'dbShowOps,which,'implementation]]]
-  if one? or member('names,exclusions) or null KDR opAlist
+  if one? or member('names, exclusions) or null IFCDR opAlist
     then htSayCold '"\&Names"
     else htMakePage [['bcLispLinks,['"\&Names",'"",'dbShowOps,which,'names]]]
   if one? or member('origins,exclusions)
@@ -1172,8 +1174,11 @@ displayDomainOp(htPage,which,origin,op,sig,predicate,
   ops := escapeSpecialChars STRINGIMAGE op
   n := #sig
   do
-    n = 2 and GETL(op, 'Nud) => htSay(ops,'" {\em ",quickForm2HtString KAR args,'"}")
-    n = 3 and GETL(op, 'Led) => htSay('"{\em ",quickForm2HtString KAR args,'"} ",ops,'" {\em ",quickForm2HtString KAR KDR args,'"}")
+    n = 2 and GETL(op, 'Nud) =>
+        htSay(ops,'" {\em ", quickForm2HtString IFCAR args, '"}")
+    n = 3 and GETL(op, 'Led) =>
+        htSay('"{\em ", quickForm2HtString IFCAR args, '"} ", ops,
+              '" {\em ", quickForm2HtString IFCAR IFCDR args, '"}")
     if unexposed? and $includeUnexposed? then
       htSayUnexposed()
     htSay(ops)
@@ -1217,20 +1222,20 @@ displayDomainOp(htPage,which,origin,op,sig,predicate,
       htSaySaturn '"{\em Arguments:}"
       htSaySaturnAmpersand()
       firstTime := true
-      coSig := KDR GETDATABASE(op,'COSIG)  --check if op is constructor
+      coSig := IFCDR GETDATABASE(op, 'COSIG)  --check if op is constructor
       for a in args for t in rest $sig repeat
             if not firstTime then
               htSaySaturn '"\\ "
               htSaySaturnAmpersand()
             firstTime := false
             htSayIndentRel(15, true)
-            position := KAR relatives
-            relatives := KDR relatives
-            if KAR coSig and t ~= '(Type)
+            position := IFCAR relatives
+            relatives := IFCDR relatives
+            if IFCAR coSig and t ~= '(Type)
               then htMakePage [['bcLinks,[a,'"",'kArgPage,a]]]
               else htSay('"{\em ",form2HtString(a),'"}")
             htSay ", "
-            coSig := KDR coSig
+            coSig := IFCDR coSig
             htSayValue t
             htSayIndentRel(-15,true)
             htSayStandard('"\newline ")
@@ -1257,7 +1262,7 @@ displayDomainOp(htPage,which,origin,op,sig,predicate,
     htSaySaturn '"\\"
   -----------------------------------------------------------
   if not MEMQ(predicate,'(T ASCONST)) then
-    pred := sublisFormal(KDR conform,predicate)
+    pred := sublisFormal(IFCDR conform, predicate)
     count := #pred
     htSaySaturn '"{\em Conditions:}"
     htSayStandard('"\newline\tab{2}{\em Conditions:}")
@@ -1294,7 +1299,7 @@ displayDomainOp(htPage,which,origin,op,sig,predicate,
       htSaySaturnAmpersand()
       firstTime := false
       htSay("{\em ",d,"} is ")
-      htSayConstructor(key,sublisFormal(KDR conform,t))
+      htSayConstructor(key, sublisFormal(IFCDR conform, t))
       htSayIndentRel(-15,count > 1)
     htSaySaturn '"\\"
   -----------------------------------------------------------
@@ -1329,7 +1334,7 @@ displayDomainOp(htPage,which,origin,op,sig,predicate,
       htSaySaturnAmpersand()
       htSayIndentRel(15)
       htSay '"\spadref{"
-      htSay CAR(CDR(link))
+      htSay first(rest(link))
       htSay '"}"
       htSayIndentRel(-15)
       htSayStandard('"\newline{}")
@@ -1376,7 +1381,7 @@ htEndTabular() ==
 
 htPopSaturn s ==
   pageDescription := ELT($saturnPage, 7)
-  pageDescription is [=s,:b] => SETELT($saturnPage, 7, CDR pageDescription)
+  pageDescription is [=s, :b] => SETELT($saturnPage, 7, rest pageDescription)
   nil
 
 htBeginTable() ==

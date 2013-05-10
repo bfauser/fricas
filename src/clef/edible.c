@@ -31,7 +31,7 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "axiom-c-macros.h"
+#include "fricas_c_macros.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -49,7 +49,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 
-#include "axiom-c-macros.h"
 #include "edible.h"
 #include "com.h"
 #include "bsdsignal.h"
@@ -62,7 +61,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "edible.H1"
 #include "fnct_key.H1"
 
-#ifdef AXIOM_UNLIKELY
+#ifdef FRICAS_UNLIKELY
 #define log 1
 #define logterm 1
 #define siglog 1

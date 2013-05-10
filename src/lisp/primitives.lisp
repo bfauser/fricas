@@ -19,69 +19,128 @@
            ,s))
 
 (defmacro QAREF2O(m i j oi oj)
-    `(QAREF1O (QAREF1O ,m ,i ,oi) ,j ,oj))
+    `(aref (the (simple-array T (* *)) ,m)
+           (|sub_SI| ,i ,oi)
+           (|sub_SI| ,j ,oj)))
 
 (defmacro QSETAREF2O (m i j r oi oj)
-    `(QSETAREF1O (QAREF1O ,m ,i ,oi) ,j ,r ,oj))
-
+    `(setf (aref (the (simple-array T (* *)) ,m) 
+                 (|sub_SI| ,i ,oi)
+                 (|sub_SI| ,j ,oj))
+           ,r))
 
 ;;; array creation
 
 (defun MAKEARR1 (size init)
     (make-array size :initial-element init))
 
-;;; Vectors of 32-bit numbers
 
-(defmacro ELT32(v i)
-    `(aref (the (simple-array (unsigned-byte 32) (*)) ,v) ,i))
+(defun MAKE_MATRIX (size1 size2)
+    (make-array (list size1 size2)))
 
-(defmacro SETELT32(v i s)
-    `(setf (aref (the (simple-array (unsigned-byte 32) (*)) ,v) ,i)
-           ,s))
+(defun MAKE_MATRIX1 (size1 size2 init)
+    (make-array (list size1 size2) :initial-element init))
+
+;;; array dimensions
+
+(defmacro ANROWS (v)
+    `(array-dimension (the (simple-array T (* *)) ,v) 0))
+
+(defmacro ANCOLS (v)
+    `(array-dimension (the (simple-array T (* *)) ,v) 1))
+
+;;; string accessors
+
+(defmacro STR_ELT(s i)
+    `(char-code (char (the string ,s) (the fixnum ,i))))
+
+(defmacro STR_ELT1(s i)
+    `(char-code (char (the string ,s) (the fixnum (- (the fixnum ,i) 1)))))
+
+(defmacro STR_SETELT1(s i c)
+    (if (integerp c)
+        `(progn 
+             (setf (char (the string ,s) (the fixnum (- (the fixnum ,i) 1)))
+                   (code-char (the fixnum ,c)))
+             ,c)
+        (let ((sc (gensym)))
+         `(let ((,sc ,c))
+             (setf (char (the string ,s) (the fixnum (- (the fixnum ,i) 1)))
+                   (code-char (the fixnum ,sc)))
+             ,sc))))
+
+;;; Creating characters
+
+(defun |STR_to_CHAR_fun| (s)
+    (if (eql (length s) 1)
+        (STR_ELT s 0)
+        (|error| "String is not a single character")))
+
+(defmacro |STR_to_CHAR| (s)
+    (if (and (stringp s) (eql (length s) 1))
+        (STR_ELT s 0)
+        `(|STR_to_CHAR_fun| ,s)))
+
+;;; Vectors and matrices of of small integer 32-bit numbers
+
+(defmacro suffixed_name(name s)
+    `(intern (concatenate 'string (symbol-name ',name)
+                                  (format nil "~A" ,s))))
 #+:sbcl
-(progn
-
-(defmacro sbcl-make-u32-vector(n)
+(defmacro sbcl_make_sized_vector(nb n)
     (multiple-value-bind (typetag n-bits)
-        (SB-IMPL::%VECTOR-WIDETAG-AND-N-BITS '(unsigned-byte 32))
+        (SB-IMPL::%VECTOR-WIDETAG-AND-N-BITS `(unsigned-byte ,nb))
         `(SB-KERNEL:ALLOCATE-VECTOR ,typetag ,n
                        (ceiling (* ,n ,n-bits) sb-vm:n-word-bits))))
 
-(defun GETREFV32(n x)
-    (let ((vec (sbcl-make-u32-vector n)))
+(defmacro DEF_SIZED_UOPS(nb)
+
+`(progn
+(defmacro ,(suffixed_name ELT_U nb) (v i)
+    `(aref (the (simple-array (unsigned-byte ,',nb) (*)) ,v) ,i))
+
+(defmacro ,(suffixed_name SETELT_U nb)(v i s)
+    `(setf (aref (the (simple-array (unsigned-byte ,',nb) (*)) ,v) ,i)
+           ,s))
+#+:sbcl
+(defun ,(suffixed_name GETREFV_U nb) (n x)
+    (let ((vec (sbcl_make_sized_vector ,nb n)))
         (fill vec x)
         vec))
 
-)
-
 #-:sbcl
-(defun GETREFV32(n x) (make-array n :initial-element x
-                                     :element-type '(unsigned-byte 32)))
+(defun ,(suffixed_name GETREFV_U nb)(n x)
+    (make-array n :initial-element x
+               :element-type '(unsigned-byte ,nb)))
 
-(defmacro QV32LEN(v)
-    `(length (the (simple-array (unsigned-byte 32) (*)) ,v)))
+(defmacro ,(suffixed_name QV_LEN_U nb)(v)
+    `(length (the (simple-array (unsigned-byte ,',nb) (*)) ,v)))
 
-;;; Matrix operations
+(defmacro ,(suffixed_name MAKE_MATRIX_U nb) (n m)
+   `(make-array (list ,n ,m) :element-type '(unsigned-byte ,',nb)))
 
-(defmacro MAKE-U32-MATRIX (n m)
-   `(make-array (list ,n ,m) :element-type '(unsigned-byte 32)))
-
-(defmacro MAKE-U32-MATRIX1 (n m s)
-   `(make-array (list ,n ,m) :element-type '(unsigned-byte 32)
+(defmacro ,(suffixed_name MAKE_MATRIX1_U nb) (n m s)
+   `(make-array (list ,n ,m) :element-type '(unsigned-byte ,',nb)
            :initial-element ,s))
 
-(defmacro U32AREF2(v i j)
-   `(aref (the (simple-array (unsigned-byte 32) (* *)) ,v) ,i ,j))
+(defmacro ,(suffixed_name AREF2_U nb) (v i j)
+   `(aref (the (simple-array (unsigned-byte ,',nb) (* *)) ,v) ,i ,j))
 
-(defmacro U32SETAREF2(v i j s)
-   `(setf (aref (the (simple-array (unsigned-byte 32) (* *)) ,v) ,i ,j)
+(defmacro ,(suffixed_name SETAREF2_U nb) (v i j s)
+   `(setf (aref (the (simple-array (unsigned-byte ,',nb) (* *)) ,v) ,i ,j)
           ,s))
 
-(defmacro U32ANROWS(v)
-    `(array-dimension (the (simple-array (unsigned-byte 32) (* *)) ,v) 0))
+(defmacro ,(suffixed_name ANROWS_U nb) (v)
+    `(array-dimension (the (simple-array (unsigned-byte ,',nb) (* *)) ,v) 0))
 
-(defmacro U32ANCOLS(v)
-    `(array-dimension (the (simple-array (unsigned-byte 32) (* *)) ,v) 1))
+(defmacro ,(suffixed_name ANCOLS_U nb) (v)
+    `(array-dimension (the (simple-array (unsigned-byte ,',nb) (* *)) ,v) 1))
+
+))
+
+(DEF_SIZED_UOPS 32)
+(DEF_SIZED_UOPS 16)
+(DEF_SIZED_UOPS 8)
 
 ;;; Modular arithmetic
 
@@ -142,6 +201,23 @@
 (defmacro QMODDOT32 (v1 v2 ind1 ind2 kk s0 p)
      `(QMODDOT0 ELT32 ,v1 ,v2 ,ind1 ,ind2 ,kk ,s0 ,p))
 
+;;; Support for HashState domain.
+;;; Here the FNV-1a algorithm is employed.
+;;; More about the FNV-1a algorithm can be found at Wikipedia, see
+;;; http://en.wikipedia.org/wiki/Fowler-Noll-Vo_hash_function.
+
+;;; FNV-1a hash
+(defconstant HASHSTATEBASIS 14695981039346656037)
+(defconstant HASHSTATEPRIME 1099511628211)
+; FNV-1a algorithm with 64bit truncation (18446744073709551615=2^64-1).
+(defmacro HASHSTATEUPDATE (x y)
+    `(logand (* HASHSTATEPRIME (logxor ,x ,y)) 18446744073709551615))
+; Make a fixnum out of (unsigned-byte 64)
+(defmacro HASHSTATEMAKEFIXNUM (x)
+    `(logand ,x most-positive-fixnum))
+(defmacro HASHSTATEMOD (x y)
+    `(mod ,x ,y))
+
 ;;; Floating point macros
 
 ;; Closure CL has buggy floating point optimizer, so for it we need
@@ -178,6 +254,10 @@
 (defmacro |negative?_DF| (x) `(MINUSP (the double-float ,x)))
 (defmacro |sqrt_DF| (x) `(SQRT (the double-float ,x)))
 (defmacro |log_DF| (x) `(LOG (the double-float ,x)))
+(defmacro |qsqrt_DF| (x) `(the double-float (SQRT
+                              (the (double-float 0.0d0 *) ,x))))
+(defmacro |qlog_DF| (x) `(the double-float (LOG
+                              (the (double-float 0.0d0 *) ,x))))
 
 (defmacro DEF_DF_UNOP (name op)
     `(defmacro ,name (x) `(the double-float (,',op (the double-float ,x)))))
@@ -195,6 +275,9 @@
 (defmacro |negative?_DF| (x) `(MINUSP ,x))
 (defmacro |sqrt_DF|(x) `(SQRT ,x))
 (defmacro |log_DF| (x) `(LOG ,x))
+(defmacro |qsqrt_DF|(x) `(SQRT ,x))
+(defmacro |qlog_DF| (x) `(LOG ,x))
+
 
 (defmacro DEF_DF_UNOP (name op)
     `(defmacro ,name (x) `(,',op ,x)))
@@ -210,8 +293,6 @@
 (DEF_DF_UNOP |sinh_DF| SINH)
 (DEF_DF_UNOP |cosh_DF| COSH)
 (DEF_DF_UNOP |tanh_DF| TANH)
-(DEF_DF_UNOP |qsqrt_DF| SQRT)
-(DEF_DF_UNOP |qlog_DF| LOG)
 
 ;;; Machine integer operations
 
@@ -432,6 +513,15 @@
 (defmacro qcddr (x)
  `(cdr (the cons (cdr (the cons ,x)))))
 
+;; qeqcar should be used when you know the first arg is a pair
+;; the second arg should either be a literal fixnum or a symbol
+;; the car of the first arg is always of the same type as the second
+
+(defmacro qeqcar (x y)
+    (cond ((typep y 'fixnum) `(eql (the fixnum (qcar ,x)) (the fixnum ,y)))
+          ((symbolp y) `(eq (qcar ,x) ,y))
+          (t (BREAK))))
+
 (defmacro qcsize (x)
  `(the fixnum (length (the simple-string ,x))))
 
@@ -457,6 +547,21 @@
 
 (defmacro qlessp(x y) `(< ,x ,y))
 
+(defmacro eqcar (x y)
+  (if (atom x)
+    `(and (consp ,x) (eql (qcar ,x) ,y))
+    (let ((xx (gensym)))
+     `(let ((,xx ,x))
+       (and (consp ,xx) (eql (qcar ,xx) ,y))))))
+
+(defmacro |bool_to_bit| (b) `(if ,b 1 0))
+
+(defmacro |bit_to_bool| (b) `(eql ,b 1))
+
+(defmacro ELT_BVEC (bv i)    `(sbit ,bv ,i))
+(defmacro SETELT_BVEC (bv i x)  `(setf (sbit ,bv ,i) ,x))
+(defmacro |size_BVEC| (bv)  `(size ,bv))
+
 ; macros needed for Spad:
 
 (defmacro EXIT (&rest value) `(return-from SEQ ,@value))
@@ -477,7 +582,7 @@
         (COND (|$letAssoc|
                (|mapLetPrint| ,(MKQ var)
                               ,var
-                              (QUOTE ,(KAR L))))
+                              (QUOTE ,(IFCAR L))))
               ('T ,var))))
      ;; used for LETs in SPAD code --- see devious trick in COMP-TRAN-1
      ((ATOM var)
@@ -485,10 +590,12 @@
          (SETQ ,var ,val)
          (IF |$letAssoc|
              ,(cond ((null (cdr l))
-                     `(|letPrint| ,(MKQ var) ,var (QUOTE ,(KAR L))))
+                     `(|letPrint| ,(MKQ var) ,var (QUOTE ,(IFCAR L))))
                     ((and (eqcar (car l) 'SPADCALL) (= (length (car l)) 3))
-                     `(|letPrint3| ,(MKQ var) ,var ,(third (car l)) (QUOTE ,(KADR L))))
-                    (t `(|letPrint2| ,(MKQ var) ,(car l) (QUOTE ,(KADR L))))))
+                     `(|letPrint3| ,(MKQ var) ,var ,(third (car l))
+                          (QUOTE ,(IFCAR (IFCDR L)))))
+                    (t `(|letPrint2| ,(MKQ var) ,(car l)
+                          (QUOTE ,(IFCAR (IFCDR L)))))))
          ,var))
      ('T (ERROR "Cannot compileLET construct"))))
 
@@ -518,6 +625,14 @@
 (defmacro |spadConstant| (dollar n)
  `(SPADCALL (svref ,dollar (the fixnum ,n))))
 
+(defmacro |SPADfirst| (l)
+  (let ((tem (gensym)))
+    `(let ((,tem ,l)) (if ,tem (car ,tem) (first-error)))))
+
+(defun first-error () (error "Cannot take first of an empty list"))
+
+(defmacro |dispatchFunction| (name) `(FUNCTION ,name))
+
 (defmacro |Record| (&rest args)
     (list '|Record0|
           (cons 'LIST
@@ -534,7 +649,39 @@
 (defmacro |Zero|() 0)
 (defmacro |One|() 1)
 
+;;; range tests and assertions
+
+(defmacro |assert| (x y) `(IF (NULL ,x) (|error| ,y)))
+
+(defun coerce-failure-msg (val mode)
+   (STRCONC (MAKE-REASONABLE (STRINGIMAGE val))
+            " cannot be coerced to mode "
+            (STRINGIMAGE (|devaluate| mode))))
+
+(defmacro |check_subtype| (pred submode val)
+   `(|assert| ,pred (coerce-failure-msg ,val ,submode)))
+
+(defmacro |check_union| (pred branch val)
+   `(|assert| ,pred (coerce-failure-msg ,val ,branch )))
+
+
 ;;; Needed by interpreter
 (defmacro REPEAT (&rest L) (|expandREPEAT| L))
 (defmacro COLLECT (&rest L) (|expandCOLLECT| L))
 
+<<<<<<< HEAD
+=======
+;;; Misc
+
+(defmacro |rplac| (x y) `(setf ,x ,y))
+
+(defmacro |do| (&rest args) (CONS 'PROGN args))
+
+;;; Support for double hashing tables
+;;; Double hashing hash tables need two distinct values.
+;;; VACANT  - a marker for a free position that has never been used
+;;; DELETED - a marker for a position that has been used but is now
+;;;           available for a new entry
+(defvar HASHTABLEVACANT  (gensym))
+(defvar HASHTABLEDELETED (gensym))
+>>>>>>> upstream/master

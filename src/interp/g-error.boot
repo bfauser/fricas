@@ -43,9 +43,9 @@
 --   query    -- ask the user if break mode should be entered
 --   quit     -- quit on error with exit status 1
 
-SETANDFILEQ($SystemError,'SystemError)
-SETANDFILEQ($UserError,'UserError)
-SETANDFILEQ($AlgebraError,'AlgebraError)
+DEFPARAMETER($SystemError, 'SystemError)
+DEFPARAMETER($UserError, 'UserError)
+DEFPARAMETER($AlgebraError, 'AlgebraError)
 
 DEFVAR($timedNameStack)
 
@@ -66,6 +66,7 @@ queryUser msg ==
 -- errorSupervisor is the old style error message trapper
 
 errorSupervisor(errorType,errorMsg) ==
+  $BreakMode = 'trapSpadErrors => THROW('trapSpadErrors, $numericFailure)
   errorSupervisor1(errorType,errorMsg,$BreakMode)
 
 errorSupervisor1(errorType,errorMsg,$BreakMode) ==
@@ -84,7 +85,7 @@ errorSupervisor1(errorType,errorMsg,$BreakMode) ==
     if member('%b,errorMsg) then splitmsg := nil
       else if member('%d,errorMsg) then splitmsg := nil
            else if member('%l,errorMsg) then splitmsg := nil
-    splitmsg => CDR [:['%l,'"   ",u] for u in errorMsg]
+    splitmsg => rest [:['%l, '"   ", u] for u in errorMsg]
     ['"   ",:errorMsg]
   sayErrorly(errorLabel, msg)
   handleLispBreakLoop($BreakMode)

@@ -58,8 +58,6 @@
 (defvar |$getPutTrace| nil)
 (defvar /TRACENAMES NIL)
 
-(defvar ind)
-
 ;************************************************************************
 ;         SYSTEM COMMANDS
 ;************************************************************************
@@ -67,9 +65,6 @@
 (defun |fin| ()
   (SETQ *EOF* 'T)
   (THROW 'SPAD_READER NIL))
-
-(defun |sort| (seq spadfn)
-    (sort (copy-seq seq) (function (lambda (x y) (SPADCALL X Y SPADFN)))))
 
 (defun QUOTIENT2 (X Y) (values (TRUNCATE X Y)))
 
@@ -81,9 +76,6 @@
 
 (defun |makeSF| (mantissa exponent)
   (FLOAT (/ mantissa (expt 2 (- exponent))) 0.0d0))
-
-;;; Used in constructors for evaluating conditions
-(define-function '|not| #'NOT)
 
 (defun |random| () (random (expt 2 26)))
 

@@ -19,10 +19,10 @@
 ++ Description:
 ++   A cachable set is a set whose elements keep an integer as part
 ++   of their structure.
-CachableSet: Category == SetCategory with
+CachableSet : Category == SetCategory with
   position   : % -> NonNegativeInteger
     ++ position(x) returns the integer n associated to x.
-  setPosition: (%, NonNegativeInteger) -> Void
+  setPosition : (%, NonNegativeInteger) -> Void
     ++ setPosition(x, n) associates the integer n to x.
 
 @
@@ -38,43 +38,43 @@ CachableSet: Category == SetCategory with
 ++   element of S once it is in the cache. This way, equality and ordering
 ++   on S are tested directly on the integers associated with the elements
 ++   of S, once they have been entered in the cache.
-SortedCache(S:CachableSet): Exports == Implementation where
+SortedCache(S : CachableSet) : Exports == Implementation where
   N    ==> NonNegativeInteger
   DIFF ==> 1024
 
   Exports ==> with
     clearCache  : () -> Void
       ++ clearCache() empties the cache.
-    enterInCache: (S, S -> Boolean) -> S
+    enterInCache : (S, S -> Boolean) -> S
       ++ enterInCache(x, f) enters x in the cache, calling \spad{f(y)} to
       ++ determine whether x is equal to y. It returns x with an integer
       ++ associated with it.
-    linearSearch: (S, S -> Boolean) -> Union(S, "failed")
+    linearSearch : (S, S -> Boolean) -> Union(S, "failed")
       ++ linearSearch(x, f) searches x in the cache, calling \spad{f(y)}
       ++ to determine whether x is equal to y.  It returns y from cache
       ++ such that f(y) or failed is no such y exists.
-    enterInCache: (S, (S, S) -> Integer) -> S
+    enterInCache : (S, (S, S) -> Integer) -> S
       ++ enterInCache(x, f) enters x in the cache, calling \spad{f(x, y)} to
-      ++ determine whether \spad{x < y (f(x,y) < 0), x = y (f(x,y) = 0)}, or
-      ++ \spad{x > y (f(x,y) > 0)}.
+      ++ determine whether \spad{x < y (f(x, y) < 0), x = y (f(x, y) = 0)}, or
+      ++ \spad{x > y (f(x, y) > 0)}.
       ++ It returns x with an integer associated with it.
 
   Implementation ==> add
     shiftCache   : (N, N) -> Void
-    insertInCache: (N, S, N) -> S
-    expandCache: (S) -> Void
+    insertInCache : (N, S, N) -> S
+    expandCache : (S) -> Void
     insertBefore : (N, S) -> Void
 
     cache : PrimitiveArray S := empty()$(PrimitiveArray S)
-    cache__size : N := 0
-    cache__use : N := 0
+    cache_size : N := 0
+    cache_use : N := 0
 
     expandCache(x) ==
-        if cache__size = cache__use then
+        if cache_size = cache_use then
             ocache := cache
-            cache__size := 2*cache__size + 10
-            cache := new(cache__size, x)$(PrimitiveArray S)
-            for k in 0..(cache__use - 1) repeat
+            cache_size := 2*cache_size + 10
+            cache := new(cache_size, x)$(PrimitiveArray S)
+            for k in 0..(cache_use - 1) repeat
                 cache(k) := ocache(k)
         void
 
@@ -82,16 +82,16 @@ SortedCache(S:CachableSet): Exports == Implementation where
         k : Integer
         expandCache(x)
         vscan := cache
-        for k in 0..(cache__use - l - 1) repeat
-            vscan(cache__use - k) := vscan(cache__use - k - 1)
+        for k in 0..(cache_use - l - 1) repeat
+            vscan(cache_use - k) := vscan(cache_use - k - 1)
         vscan(l) := x
-        cache__use := cache__use + 1
+        cache_use := cache_use + 1
         void
 
     shiftCache(l, n) ==
         k : Integer
         vscan := cache
-        for k in l..(cache__use - 1) repeat
+        for k in l..(cache_use - 1) repeat
             x := vscan(k)
             setPosition(x, n + position x)
         void
@@ -99,25 +99,25 @@ SortedCache(S:CachableSet): Exports == Implementation where
     clearCache() ==
         k : Integer
         vscan := cache
-        for k in 0..(cache__use - 1) repeat
+        for k in 0..(cache_use - 1) repeat
             x := vscan(k)
             setPosition(x, 0)
         cache := empty()$(PrimitiveArray S)
-        cache__size := 0
-        cache__use := 0
+        cache_size := 0
+        cache_use := 0
         void
 
-    insertAtEnd(x:S):Void ==
+    insertAtEnd(x : S) : Void ==
         expandCache(x)
-        cache(cache__use) := x
-        cache__use := cache__use + 1
+        cache(cache_use) := x
+        cache_use := cache_use + 1
         void
 
-    linearSearch(x:S, equal?:S -> Boolean) ==
+    linearSearch(x : S, equal? : S -> Boolean) ==
         k : Integer := 0
         -- Can not use for loop because equal? can insert new elements
-        -- and change cache__use
-        while k < cache__use repeat
+        -- and change cache_use
+        while k < cache_use repeat
             vscan := cache
             y := vscan(k)
             equal?(y) =>
@@ -129,37 +129,63 @@ SortedCache(S:CachableSet): Exports == Implementation where
             k := k + 1
         return "failed"
 
-    enterInCache(x:S, equal?:S -> Boolean) ==
+    enterInCache(x : S, equal? : S -> Boolean) ==
         (res := linearSearch(x, equal?)) case S =>
             res::S
-        setPosition(x, 1 + cache__use)
+        setPosition(x, 1 + cache_use)
         insertAtEnd(x)
         x
 
-    enterInCache(x:S, triage:(S, S) -> Integer) ==
+    enterInCache(x : S, triage : (S, S) -> Integer) ==
         vscan := cache
         l : Integer := -1
-        m : Integer := cache__use
+        m : Integer := cache_use
         m0 := m
-        zero?(cache__use) =>
+        zero?(cache_use) =>
             setPosition(x, DIFF)
             insertAtEnd(x)
             return x
         while (l + 1) < m repeat
+            vl : S
+            vm : S
+            m0 := cache_use
+            if not(l < 0) then
+                vl := qelt(vscan, l)
+            has_vm := false
+            if m < m0 then
+                vm := qelt(vscan, m)
+                has_vm := true
             i := shift(l + m, -1)
             cp := triage(x, y := qelt(vscan, i))
             zero?(cp) =>
                 setPosition(x, position y)
                 return y
+            vscan := cache
+            if not(l < 0) then
+                if not(EQ(vl, qelt(vscan, l))$Lisp) then
+                    l0 := l
+                    while not(EQ(vl, qelt(vscan, l))$Lisp) repeat
+                        l := l + 1
+                    i := i + l - l0
+                    m := m + l - l0
+            if not(EQ(y, qelt(vscan, i))$Lisp) then
+                i0 := i
+                while not(EQ(y, qelt(vscan, i))$Lisp) repeat
+                    i := i + 1
+                m := m + i - i0
+            if has_vm then
+                if not(EQ(vm, qelt(vscan, m))$Lisp) then
+                    while not(EQ(vm, qelt(vscan, m))$Lisp) repeat
+                        m := m + 1
             if cp < 0 then
                 m := i
             else
                 l := i
-        m = m0 =>
+        m = cache_use =>
             setPosition(x, (position qelt(vscan, m - 1)) + DIFF)
             insertAtEnd(x)
             return x
-        pos :N :=
+        pos : N :=
                 l < 0 => 0
                 position qelt(vscan, l)
         insertInCache((l+1)::N, x, pos)
@@ -181,23 +207,23 @@ SortedCache(S:CachableSet): Exports == Implementation where
 ++ Date Last Updated: 14 May 1991
 ++ Description:
 ++   MakeCachableSet(S) returns a cachable set which is equal to S as a set.
-MakeCachableSet(S:SetCategory): Exports == Implementation where
+MakeCachableSet(S : SetCategory) : Exports == Implementation where
   Exports ==> Join(CachableSet, CoercibleTo S) with
-    coerce: S -> %
+    coerce : S -> %
       ++ coerce(s) returns s viewed as an element of %.
 
   Implementation ==> add
     import SortedCache(%)
 
-    Rep := Record(setpart: S, pos: NonNegativeInteger)
+    Rep := Record(setpart : S, pos : NonNegativeInteger)
 
     clearCache()
 
     position x             == x.pos
     setPosition(x, n)      == (x.pos := n; void)
-    coerce(x:%):S          == x.setpart
-    coerce(x:%):OutputForm == x::S::OutputForm
-    coerce(s:S):%          == enterInCache([s, 0]$Rep,
+    coerce(x : %) : S          == x.setpart
+    coerce(x : %) : OutputForm == x::S::OutputForm
+    coerce(s : S) : %          == enterInCache([s, 0]$Rep,
                                  (x1 +-> (s = x1::S))@(% -> Boolean))
 
 --    x < y ==
@@ -223,33 +249,33 @@ MakeCachableSet(S:SetCategory): Exports == Implementation where
 ++ Description:
 ++ A kernel over a set S is an operator applied to a given list
 ++ of arguments from S.
-Kernel(S : Comparable): Exports == Implementation where
+Kernel(S : Comparable) : Exports == Implementation where
   O  ==> OutputForm
   N  ==> NonNegativeInteger
   OP ==> BasicOperator
 
   Exports ==> Join(CachableSet, OrderedSet, Patternable S) with
     name    : % -> Symbol
-      ++ name(op(a1,...,an)) returns the name of op.
-    operator: % -> OP
-      ++ operator(op(a1,...,an)) returns the operator op.
-    argument: % -> List S
-      ++ argument(op(a1,...,an)) returns \spad{[a1,...,an]}.
+      ++ name(op(a1, ..., an)) returns the name of op.
+    operator : % -> OP
+      ++ operator(op(a1, ..., an)) returns the operator op.
+    argument : % -> List S
+      ++ argument(op(a1, ..., an)) returns \spad{[a1, ..., an]}.
     height  : % -> N
       ++ height(k) returns the nesting level of k.
     kernel  : (OP, List S, N) -> %
-      ++ kernel(op, [a1,...,an], m) returns the kernel \spad{op(a1,...,an)}
+      ++ kernel(op, [a1, ..., an], m) returns the kernel \spad{op(a1, ..., an)}
       ++ of nesting level m.
-      ++ Error: if op is k-ary for some k not equal to m.
+      ++ Error: if op is k-ary for some k not equal to n.
     kernel  : Symbol -> %
       ++ kernel(x) returns x viewed as a kernel.
-    symbolIfCan: % -> Union(Symbol, "failed")
+    symbolIfCan : % -> Union(Symbol, "failed")
       ++ symbolIfCan(k) returns k viewed as a symbol if k is a symbol, and
       ++ "failed" otherwise.
     is?     : (%, OP) -> Boolean
-      ++ is?(op(a1,...,an), f) tests if op = f.
+      ++ is?(op(a1, ..., an), f) tests if op = f.
     is?     : (%, Symbol) -> Boolean
-      ++ is?(op(a1,...,an), s) tests if the name of op is s.
+      ++ is?(op(a1, ..., an), s) tests if the name of op is s.
     if S has ConvertibleTo InputForm then ConvertibleTo InputForm
 
   Implementation ==> add
@@ -275,14 +301,14 @@ Kernel(S : Comparable): Exports == Implementation where
     clearCache()
 
     B2Z   : Boolean -> Integer
-    triage: (%, %)  -> Integer
+    triage : (%, %)  -> Integer
     preds : OP      -> List Any
 
-    is?(k:%, s:Symbol) == is?(operator k, s)
-    is?(k:%, o:OP)     == (operator k) = o
+    is?(k : %, s : Symbol) == is?(operator k, s)
+    is?(k : %, o : OP)     == (operator k) = o
     name k             == name operator k
     B2Z flag           == (flag => -1; 1)
-    kernel s           == kernel(assert(operator(s,0),SYMBOL), nil(), 1)
+    kernel s           == kernel(assert(operator(s, 0), SYMBOL), nil(), 1)
 
     preds o ==
       (u := property(o, PMPRED)) case "failed" => nil()
@@ -323,7 +349,7 @@ Kernel(S : Comparable): Exports == Implementation where
     -- SPECIALDISP contains a map List S -> OutputForm
     -- it is used when the converting the arguments first is not good,
     -- for instance with formal derivatives.
-    coerce(k:%):OutputForm ==
+    coerce(k : %) : OutputForm ==
       (v := symbolIfCan k) case Symbol => v::Symbol::OutputForm
       (f := property(o := operator k, SPECIALDISP)) case None =>
         ((f::None) pretend (List S -> OutputForm)) (argument k)
@@ -343,7 +369,7 @@ Kernel(S : Comparable): Exports == Implementation where
       0
 
     if S has ConvertibleTo InputForm then
-      convert(k:%):InputForm ==
+      convert(k : %) : InputForm ==
         (v := symbolIfCan k) case Symbol => convert(v::Symbol)@InputForm
         (f := property(o := operator k, SPECIALINPUT)) case None =>
           ((f::None) pretend (List S -> InputForm)) (argument k)
@@ -353,7 +379,7 @@ Kernel(S : Comparable): Exports == Implementation where
         (u::(List InputForm -> InputForm)) l
 
     if S has ConvertibleTo Pattern Integer then
-      convert(k:%):Pattern(Integer) ==
+      convert(k : %) : Pattern(Integer) ==
         o := operator k
         (v := symbolIfCan k) case Symbol =>
           s  := patternVariable(v::Symbol,
@@ -363,7 +389,7 @@ Kernel(S : Comparable): Exports == Implementation where
         o [convert x for x in argument(k)]$List(Pattern Integer)
 
     if S has ConvertibleTo Pattern Float then
-      convert(k:%):Pattern(Float) ==
+      convert(k : %) : Pattern(Float) ==
         o := operator k
         (v := symbolIfCan k) case Symbol =>
           s  := patternVariable(v::Symbol,
@@ -378,8 +404,8 @@ Kernel(S : Comparable): Exports == Implementation where
 )abbrev package KERNEL2 KernelFunctions2
 ++ Description:
 ++ This package exports some auxiliary functions on kernels
-KernelFunctions2(R:Comparable, S: Comparable): with
-  constantKernel: R -> Kernel S
+KernelFunctions2(R : Comparable, S : Comparable) : with
+  constantKernel : R -> Kernel S
         ++ constantKernel(r) \undocumented
   constantIfCan : Kernel S -> Union(R, "failed")
         ++ constantIfCan(k) \undocumented

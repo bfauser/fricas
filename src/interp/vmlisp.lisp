@@ -51,90 +51,17 @@
 
 (defvar *fileactq-apply* nil "function to apply in fileactq")
 
-;; DEFMACROS
-
-
-(defmacro add1 (x)
- `(1+ ,x))
-
-(defmacro assq (a b)
- `(assoc ,a ,b :test #'eq))
-
-(defmacro eqcar (x y)
-  (if (atom x)
-    `(and (consp ,x) (eql (qcar ,x) ,y))
-    (let ((xx (gensym)))
-     `(let ((,xx ,x))
-       (and (consp ,xx) (eql (qcar ,xx) ,y))))))
-
-(defmacro fetchchar (x i)
- `(char ,x ,i))
-
-(defmacro fixp (x)
- `(integerp ,x))
-
-(defmacro |idChar?| (x)
- `(or (alphanumericp ,x) (member ,x '(#\? #\% #\' #\!) :test #'char=)))
-
-(defmacro identp (x)
- (if (atom x)
-  `(and ,x (symbolp ,x))
-   (let ((xx (gensym)))
-    `(let ((,xx ,x))
-      (and ,xx (symbolp ,xx))))))
-
-(defmacro ifcar (x)
-  (if (atom x)
-      `(and (consp ,x) (qcar ,x))
-    (let ((xx (gensym)))
-      `(let ((,xx ,x))
-         (and (consp ,xx) (qcar ,xx))))))
-
-(defmacro ifcdr (x)
-  (if (atom x)
-      `(and (consp ,x) (qcdr ,x))
-    (let ((xx (gensym)))
-      `(let ((,xx ,x))
-         (and (consp ,xx) (qcdr ,xx))))))
-
-(defmacro LASTNODE (l)
- `(last ,l))
-
-(defmacro makestring (a) a)
-
-(defmacro maxindex (x)
- `(the fixnum (1- (the fixnum (length ,x)))))
-
-(defmacro minus (x)
- `(- ,x))
-
-(defmacro ne (a b) `(not (equal ,a ,b)))
-
-(defmacro neq (a b) `(not (eq ,a ,b)))
-
-(defmacro refvecp (v) `(simple-vector-p ,v))
-
-(defmacro SETANDFILEQ (id item)
-   `(defparameter ,id ,item))
-
-(defmacro sintp (n)
- `(typep ,n 'fixnum))
-
-(defmacro |startsId?| (x)
- `(or (alpha-char-p ,x) (member ,x '(#\? #\% #\!) :test #'char=)))
-
-(defmacro stringlength (x)
- `(length (the string ,x)))
-
-(defmacro subrp (x)
- `(compiled-function-p ,x))
-
-(defmacro vecp (v) `(simple-vector-p ,v))
-
 ;; defuns
 
 (defun define-function (f v)
  (setf (symbol-function f) v))
+
+(define-function '|append| #'APPEND)
+(define-function 'LASTTAIL #'last)
+
+;;; Used in constructors for evaluating conditions
+(define-function '|not| #'NOT)
+
 
 (define-function 'tempus-fugit #'get-internal-run-time)
 
@@ -377,10 +304,6 @@
 
 ; 14.6 Miscellaneous
 
-(defun QSORT (l)
- (declare (special sortgreaterp))
-  (NREVERSE (sort (copy-seq l) SORTGREATERP)))
-
 (defun SORTBY (keyfn l)
  (declare (special sortgreaterp))
   (nreverse (sort (copy-seq l) SORTGREATERP :key keyfn)))
@@ -506,7 +429,8 @@
 (defun QENUM (cvec ind) (char-code (char cvec ind)))
 
 (defun QESET (cvec ind charnum)
-  (setf (char cvec ind) (code-char charnum)))
+  (setf (char cvec ind) (code-char charnum))
+  charnum)
 
 (defun string2id-n (cvec sint)
   (if (< sint 1)
@@ -524,14 +448,6 @@
   (if length (subseq cvec start (+ start length)) (subseq cvec start)))
 
 ; 17.3 Searching
-
-;;- (defun strpos (what in start dontcare)
-;;-    (setq what (string what) in (string in))
-;;-    (if dontcare (progn (setq dontcare (character dontcare))
-;;-                    (search what in :start2 start
-;;-                            :test #'(lambda (x y) (or (eql x dontcare)
-;;-                                                      (eql x y)))))
-;;-                 (search what in :start2 start)))
 
 (defun strpos (what in start dontcare)
    (setq what (string what) in (string in))
@@ -705,8 +621,6 @@
 
 (defvar *embedded-functions* nil)
 
-(defun EMBEDDED () (mapcar #'car *embedded-functions*))
-
 (defun EMBED (CURRENT-BINDING NEW-DEFINITION)
   (PROG
       (OP BV BODY OLD-DEF)
@@ -732,6 +646,7 @@
                 ( 'T
                   NEW-DEFINITION ) ) )
             ( 'T
+              (BREAK)
               `((LAMBDA (,CURRENT-BINDING) ,NEW-DEFINITION) ',OLD-DEF)))
             )
       (SETF NEW-DEFINITION (COERCE NEW-DEFINITION 'FUNCTION))
@@ -1002,19 +917,6 @@
     (/ (cos a) (sin a))
     (/ 1.0 (tan a))))
 
-;;; These functions should be defined for DoubleFloat inputs but are not.
-;;; These are cheap and easy definitions that work but should be rewritten.
-(defun sec (x) (/ 1 (cos x)))
-(defun csc (x) (/ 1 (sin x)))
-(defun acsc (x) (asin (/ 1 x)))
-(defun asec (x) (acos (/ 1 x)))
-(defun csch (x) (/ 1 (sinh x)))
-(defun coth (x) (* (cosh x) (csch x)))
-(defun sech (x) (/ 1 (cosh x)))
-(defun acsch (x) (asinh (/ 1 x)))
-(defun acoth (x) (atanh (/ 1 x)))
-(defun asech (x) (acosh (/ 1 x)))
-
 ;;; moved from unlisp.lisp.pamphlet
 (defun |AlistAssocQ| (key l)
   (assoc key l :test #'eq) )
@@ -1046,30 +948,23 @@
 
 ;;; SMW Nov 88: Created
 
-(defmacro truth-to-bit (x) `(cond (,x 1) ('else 0)))
-(defmacro bit-to-truth (b) `(eq ,b 1))
-
-(defun    bvec-make-full (n x)
+(defun    |make_BVEC| (n x)
     (make-array (list n) :element-type 'bit :initial-element x))
 
-(defmacro bvec-elt       (bv i)    `(sbit ,bv ,i))
-(defmacro bvec-setelt    (bv i x)  `(setf (sbit ,bv ,i) ,x))
-(defmacro bvec-size      (bv)      `(size ,bv))
-
-(defun    bvec-copy      (bv)      (copy-seq bv))
-(defun    bvec-concat    (bv1 bv2) (concatenate '(vector bit) bv1 bv2))
-(defun    bvec-equal     (bv1 bv2) (equal    bv1 bv2))
-(defun    bvec-greater   (bv1 bv2)
+(defun    |copy_BVEC|      (bv)      (copy-seq bv))
+(defun    |concat_BVEC|    (bv1 bv2) (concatenate '(vector bit) bv1 bv2))
+(defun    |equal_BVEC|     (bv1 bv2) (equal    bv1 bv2))
+(defun    |greater_BVEC|   (bv1 bv2)
   (let ((pos (mismatch bv1 bv2)))
     (cond ((or (null pos) (>= pos (length bv1))) nil)
           ((< pos (length bv2)) (> (bit bv1 pos) (bit bv2 pos)))
           ((find 1 bv1 :start pos) t)
           (t nil))))
-(defun    bvec-and       (bv1 bv2) (bit-and  bv1 bv2))
-(defun    bvec-or        (bv1 bv2) (bit-ior  bv1 bv2))
-(defun    bvec-xor       (bv1 bv2) (bit-xor  bv1 bv2))
-(defun    bvec-nand      (bv1 bv2) (bit-nand bv1 bv2))
-(defun    bvec-nor       (bv1 bv2) (bit-nor  bv1 bv2))
-(defun    bvec-not       (bv)      (bit-not  bv))
+(defun    |and_BVEC|       (bv1 bv2) (bit-and  bv1 bv2))
+(defun    |or_BVEC|        (bv1 bv2) (bit-ior  bv1 bv2))
+(defun    |xor_BVEC|       (bv1 bv2) (bit-xor  bv1 bv2))
+(defun    |nand_BVEC|      (bv1 bv2) (bit-nand bv1 bv2))
+(defun    |nor_BVEC|       (bv1 bv2) (bit-nor  bv1 bv2))
+(defun    |not_BVEC|       (bv)      (bit-not  bv))
 
 ;;; end of moved fragment

@@ -45,7 +45,7 @@ showSummary dom ==
 --=======================================================================
 showImp(dom,:options) ==
   sayBrightly '"-------------Operation summary-----------------"
-  missingOnlyFlag := KAR options
+  missingOnlyFlag := IFCAR options
   domainForm := devaluate dom
   [nam,:$domainArgs] := domainForm
   $predicateList: local := GETDATABASE(nam,'PREDICATES)
@@ -69,7 +69,7 @@ showImp(dom,:options) ==
   --first display those exported by the domain, then add chain guys
   u := [:domexports,:constants,:SORTBY('CDDR,others)]
   while u repeat
-    [.,.,:key] := CAR u
+    [., ., :key] := first u
     sayBrightly
       key = 'constant =>
         ["Constants implemented by",:bright form2String key,'":"]
@@ -77,14 +77,14 @@ showImp(dom,:options) ==
     u := showDomainsOp1(u,key)
   u := SORTBY('CDDR,defexports)
   while u repeat
-    [.,.,:key] := CAR u
-    defop := INTERN(SUBSTRING((s := PNAME CAR key),0,MAXINDEX s))
+    [., ., :key] := first u
+    defop := INTERN(SUBSTRING((s := PNAME first key), 0, MAXINDEX s))
     domainForm := [defop,:CDDR key]
     sayBrightly ["Default functions from",:bright form2String domainForm,'":"]
     u := showDomainsOp1(u,key)
   u := SORTBY('CDDR,unexports)
   while u repeat
-    [.,.,:key] := CAR u
+    [., ., :key] := first u
     sayBrightly ["Not exported: "]
     u := showDomainsOp1(u,key)
 
@@ -92,7 +92,7 @@ showImp(dom,:options) ==
 --          Show Information Directly From Domains
 --=======================================================================
 showFrom(D,:option) ==
-  ops := KAR option
+  ops := IFCAR option
   alist := nil
   domainForm := devaluate D
   [nam,:.] := domainForm
@@ -110,30 +110,31 @@ showFrom(D,:option) ==
 --=======================================================================
 getDomainOps D ==
   domname := D.0
-  conname := CAR domname
+  conname := first domname
   $predicateList: local := GETDATABASE(conname,'PREDICATES)
   REMDUP listSort(function GLESSEQP,ASSOCLEFT getDomainOpTable(D,nil))
 
 getDomainSigs(D,:option) ==
   domname := D.0
-  conname := CAR domname
+  conname := first domname
   $predicateList: local := GETDATABASE(conname,'PREDICATES)
   getDomainSigs1(D,first option)
 
 getDomainSigs1(D,ops) == listSort(function GLESSEQP,u) where
-  u == [x for x in getDomainOpTable(D,nil) | null ops or MEMQ(CAR x,ops)]
+  u == [x for x in getDomainOpTable(D, nil) |
+          null ops or MEMQ(first x, ops)]
 
 getDomainDocs(D,:option) ==
   domname := D.0
-  conname := CAR domname
+  conname := first domname
   $predicateList: local := GETDATABASE(conname,'PREDICATES)
-  ops := KAR option
+  ops := IFCAR option
   [[op,sig,:getInheritanceByDoc(D,op,sig)] for [op,sig] in getDomainSigs1(D,ops)]
 
 --=======================================================================
 --          Getting Inheritance Info from Documentation in Lisplib
 --=======================================================================
-from?(D,op,sig) == KAR KDR getInheritanceByDoc(D,op,sig)
+from?(D, op, sig) == IFCAR IFCDR getInheritanceByDoc(D, op, sig)
 
 getExtensionsOfDomain domain ==
   u := getDomainExtensionsOfDomain domain
@@ -171,20 +172,20 @@ getCategoriesOfDomain domain ==
 getInheritanceByDoc(D,op,sig,:options) ==
 --gets inheritance and documentation information by looking in the LISPLIB
 --for each ancestor of the domain
-  catList := KAR options or getExtensionsOfDomain D
+  catList := IFCAR options or getExtensionsOfDomain D
   getDocDomainForOpSig(op,sig,devaluate D,D) or
     or/[fn for x in catList] or '(NIL NIL)
       where fn == getDocDomainForOpSig(op,sig,substDomainArgs(D,x),D)
 
 getDocDomainForOpSig(op,sig,dollar,D) ==
-  (u := LASSOC(op,GETDATABASE(CAR dollar,'DOCUMENTATION)))
+  (u := LASSOC(op, GETDATABASE(first dollar, 'DOCUMENTATION)))
     and (doc := or/[[d,dollar] for [s,:d] in u | compareSig(sig,s,D,dollar)])
 
 --=======================================================================
 --               Functions implementing showImp
 --=======================================================================
 showDomainsOp1(u,key) ==
-  while u and CAR u is [op,sig,: =key] repeat
+  while u and first u is [op, sig, : =key] repeat
     sayBrightly ['"   ",:formatOpSignature(op,sig)]
     u := rest u
   u
@@ -204,7 +205,7 @@ getDomainSeteltForm ['SETELT,.,.,form] ==
 
 showPredicates dom ==
   sayBrightly '"--------------------Predicate summary-------------------"
-  conname := CAR dom.0
+  conname := first(dom.0)
   predvector := dom.3
   predicateList := GETDATABASE(conname,'PREDICATES)
   for i in 1.. for p in predicateList repeat
@@ -215,7 +216,7 @@ showPredicates dom ==
 
 showAttributes dom ==
   sayBrightly '"--------------------Attribute summary-------------------"
-  conname := CAR dom.0
+  conname := first(dom.0)
   abb := getConstructorAbbreviation conname
   predvector := dom.3
   for [a,:p] in dom.2 repeat

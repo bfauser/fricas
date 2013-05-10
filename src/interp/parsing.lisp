@@ -30,124 +30,7 @@
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-; NAME:    META/LISP Parser Generator and Lexical Analysis Utilities (Parsing)
-;
-; PURPOSE: This package provides routines to support the Metalanguage
-;          translator writing system.   Metalanguage is described
-;          in META/LISP, R.D. Jenks, Tech Report, IBM T.J. Watson Research Center,
-;          1969.  Familiarity with this document is assumed.
-;
-;          The parser generator itself is described in either the file
-;          MetaBoot.lisp (hand-coded version) or the file MetaMeta.lisp (machine
-;          generated from self-descriptive Meta code), both of which load themselves
-;          into package Parsing.
-
-; CONTENTS:
-;
-;       0. Current I/O Stream definition
-;
-;       1. Data structure declarations (defstructs) for parsing objects
-;
-;               A. Line Buffer
-;               B. Stack
-;               C. Token
-;               D. Reduction
-;
-;       2. Recursive descent parsing support routines
-;               A. Stacking and retrieving reductions of rules.
-;               B. Applying metagrammatical elements of a production (e.g., Star).
-;
-;       3. Routines for handling lexical scanning
-;
-;               A. Manipulating the token stack and reading tokens
-;               B. Error handling
-;               C. Constructing parsing procedures
-;               D. Managing rule sets
-;
-;       4. Tracing routines
-;
-;       5. Routines for inspecting and resetting total I/O system state
-;
-;       METALEX.LISP:  Meta file handling, auxiliary parsing actions and tokenizing
-;       METAMETA.LISP: Meta parsing
-;
-;       BOOTLEX.LISP:  Boot file handling, auxiliary parsing actions and tokenizing
-;       NEWMETA.LISP:  Boot parsing
-
 (in-package "BOOT")
-
-; 0. Current I/O Stream definition
-
-(defparameter in-stream  t "Current input stream.")
-(defparameter out-stream t "Current output stream.")
-(defparameter File-Closed nil   "Way to stop EOF tests for console input.")
-
-; 1. Data structure declarations (defstructs) for parsing objects
-;
-;               A. Line Buffer
-;               B. Stack
-;               C. Token
-;               D. Reduction
-
-; 1A. A Line Buffer
-;
-; The philosophy of lines is that
-;
-;       a) NEXT LINE will always get you a non-blank line or fail.
-;       b) Every line is terminated by a blank character.
-;
-; Hence there is always a current character, because there is never a non-blank line,
-; and there is always a separator character between tokens on separate lines.
-; Also, when a line is read, the character pointer is always positioned ON the first
-; character.
-
-; FUNCTIONS DEFINED IN THIS SECTION:
-;
-;       Line-Buffer, Line-Current-Char, Line-Current-Index, Line-Last-Index, Line-Number
-;       Line-New-Line, Line-Advance-Char, Line-Past-End-P, Line-At-End-P
-;       Make-Line
-
-(defstruct Line "Line of input file to parse."
-           (Buffer (make-string 0) :type string)
-           (Current-Char #\Return :type character)
-           (Current-Index 1 :type fixnum)
-           (Last-Index 0 :type fixnum)
-           (Number 0 :type fixnum))
-
-(defun Line-Print (line)
-  (format out-stream "~&~5D> ~A~%" (Line-Number line) (Line-Buffer Line))
-  (format out-stream "~v@T^~%" (+ 7 (Line-Current-Index line))))
-
-(defun Line-Clear (line)
-  (let ((l line))
-     (setf (Line-Buffer l) (make-string 0)
-           (Line-Current-Char l) #\Return
-           (Line-Current-Index l) 1
-           (Line-Last-Index l) 0
-           (Line-Number l) 0)))
-
-(defun Line-New-Line (string line &optional (linenum nil))
-  "Sets string to be the next line stored in line."
-  (setf (Line-Last-Index line) (1- (length string))
-        (Line-Current-Index line) 0
-        (Line-Current-Char line) (or (and (> (length string) 0) (elt string 0)) #\Return)
-        (Line-Buffer line) string
-        (Line-Number line) (or linenum (1+ (Line-Number line)))))
-
-(defun Line-Advance-Char (line)
-  (setf (Line-Current-Char line)
-        (elt (Line-Buffer line) (incf (Line-Current-Index line)))))
-
-(defun Line-Next-Char (line)
-  (elt (Line-Buffer line) (1+ (Line-Current-Index line))))
-
-(defun Line-Past-End-P (line)
-  "Tests if line is empty or positioned past the last character."
-  (> (line-current-index line) (line-last-index line)))
-
-(defun Line-At-End-P (line)
-  "Tests if line is empty or positioned past the last character."
-  (>= (line-current-index line) (line-last-index line)))
 
 ; 1C. Token
 
@@ -165,7 +48,6 @@ NonBlank is true if the token is not preceded by a blank."
 )
 
 (defparameter Prior-Token (make-token) "What did I see last")
-(defparameter nonblank t "Is there no blank in front of the current token.")
 (defparameter Current-Token (make-token) "Token at head of input stream.")
 (defparameter Next-Token (make-token)    "Next token in input stream.")
 (defparameter Valid-Tokens 0               "Number of tokens in buffer (0, 1 or 2)")
@@ -177,7 +59,7 @@ NonBlank is true if the token is not preceded by a blank."
   token)
 
 (defun Token-Print (token)
-  (format out-stream "(token (symbol ~S) (type ~S))~%"
+  (format t "(token (symbol ~S) (type ~S))~%"
           (Token-Symbol token) (Token-Type token)))
 
 ; 1D. A Reduction
@@ -192,74 +74,6 @@ NonBlank is true if the token is not preceded by a blank."
 ;                  of a production (e.g., Star).
 ;               C. Token-level parsing utilities (keywords, strings, identifiers).
 
-; 2A. Routines for stacking and retrieving reductions of rules.
-
-; FUNCTIONS DEFINED IN THIS SECTION:
-;
-;       Push-Reduction Pop-Reduction
-
-(defun |next_symbol|() (NEXT-SYMBOL))
-(defun |match_current_token|(x y) (MATCH-CURRENT-TOKEN x y))
-
-; 2B. Routines for applying certain metagrammatical elements
-;     of a production (e.g., Star).
-
-; Must means that if it is not present in the token stream, it is a syntax error.
-
-; FUNCTIONS DEFINED IN THIS SECTION:
-;
-;       MUST, OPTIONAL, ACTION
-
-(defun MUST(dothis) (or dothis (meta-syntax-error nil nil)))
-
-; Optional means that if it is present in the token stream, that is a good thing,
-; otherwise don't worry (like [ foo ] in BNF notation).
-
-(defun OPTIONAL (dothis) (or dothis t))
-
-; Action is something we do as a consequence of successful parsing; it is
-; inserted at the end of the conjunction of requirements for a successful
-; parse, and so should return T.
-
-(defun ACTION (dothis) (or dothis t))
-
-; 3. Routines for handling lexical scanning
-;
-; Lexical scanning of tokens is performed off of the current line.  No
-; token can span more than 1 line.  All real I/O is handled in a line-oriented
-; fashion (in a slight paradox) below the character level.  All character
-; routines implicitly assume the parameter Current-Line.  We do not make
-; Current-Line an explicit optional parameter for reasons of efficiency.
-
-(defparameter prev-line nil)
-(defparameter prev-line-number 0)
-
-(defun prev-line-show ()
-    (if prev-line
-        (format t "~&The prior line was:~%~%~5D> ~A~%~%"
-               prev-line-number prev-line)
-        (format t "~&The prior line is empty.~%")))
-
-(defun prev-line-set (l)
-    (if (> (Line-Last-Index l) 0)
-        (progn
-            (setf prev-line (Line-Buffer l))
-            (setf prev-line-number (Line-Number l)))))
-
-(defun prev-line-clear ()
-    (setf prev-line nil))
-
-(defparameter Current-Line (make-line)  "Current input line.")
-
-(defmacro current-line-print () '(Line-Print Current-Line))
-
-(defmacro current-line-show ()
-  `(if (line-past-end-p current-line)
-       (format t "~&The current line is empty.~%")
-       (progn (format t "~&The current line is:~%~%")
-              (current-line-print))))
-
-(defmacro current-line-clear () `(Line-Clear Current-Line))
 
 ; 3A.  Manipulating the token stack and reading tokens
 
@@ -294,71 +108,71 @@ NonBlank is true if the token is not preceded by a blank."
              ))
 )
 
-(defmacro token-stack-clear ()
-  `(progn (setq Valid-Tokens 0)
+(defun token-stack-clear ()
+   (progn (setq Valid-Tokens 0)
           (token-install nil nil current-token nil)
           (token-install nil nil next-token nil)
           (token-install nil nil prior-token nil)))
 
 ; *** Match Token
 
-(defun match-token (token type &optional (symbol nil))
+(defun match-token (token type symbol)
   (if (and token (eq (token-type token) type))
       (if symbol (if (eq symbol (token-symbol token)) token) token)))
 
 (defun |match_current_token|(type symbol)
   "Returns the current token if it has EQ type and (optionally) equal symbol."
-  (match-token (current-token) type symbol))
+  (match-token (|current_token|) type symbol))
 
 (defun |match_next_token|(type symbol)
   "Returns the next token if it has equal type and (optionally) equal symbol."
-  (match-token (next-token) type symbol))
+  (match-token (|next_token|) type symbol))
 
 ; *** Current Token, Next Token, Advance Token
 
 (defun try-get-token (token)
   (let ((tok (get-token token)))
-    (if tok (progn (incf Valid-Tokens) token))))
+    (if tok (progn (setf Valid-Tokens (|inc_SI| Valid-Tokens)) token))))
 
-(defun |current_symbol|() (make-symbol-of (current-token)))
+(defun |current_symbol|() (make-symbol-of (|current_token|)))
 
-(defun next-symbol () (make-symbol-of (next-token)))
+(defun |next_symbol|() (make-symbol-of (|next_token|)))
 
 (defun make-symbol-of (token)
   (let ((u (and token (token-symbol token))))
     (cond ((not u) nil)
           (u))))
 
-(defun current-token ()
+(defun |current_token|()
   "Returns the current token getting a new one if necessary."
-  (if (> Valid-Tokens 0)
+  (if (|greater_SI| Valid-Tokens 0)
       Current-Token
       (try-get-token Current-Token)))
 
-(defun next-token ()
+(defun |next_token| ()
   "Returns the token after the current token, or NIL if there is none after."
-  (current-token)
-  (if (> Valid-Tokens 1)
+  (|current_token|)
+  (if (|greater_SI| Valid-Tokens 1)
       Next-Token
       (progn
           (try-get-token Next-Token))))
 
 (defun |advance_token|()
-  (current-token)                       ;don't know why this is needed
   "Makes the next token be the current token."
   (case Valid-Tokens
-    (0 (try-get-token (Current-Token)))
-    (1 (decf Valid-Tokens)
+    (0 (try-get-token Current-Token))
+    (1 (setf  Valid-Tokens (|dec_SI| Valid-Tokens))
        (setq Prior-Token (copy-token Current-Token))
        (try-get-token Current-Token))
     (2 (setq Prior-Token (copy-token Current-Token))
        (setq Current-Token (copy-token Next-Token))
-       (decf Valid-Tokens))))
+       (setf Valid-Tokens (|dec_SI| Valid-Tokens)))))
 
-(defparameter XTokenReader 'get-boot-token "Tokenizing function")
+(defparameter |$token_reader| 'get-boot-token "Tokenizing function")
 
 ; *** Get Token
 
+<<<<<<< HEAD
 (defun get-token (token) (funcall XTokenReader token))
 
 ; 3A (2) Character handling.
@@ -458,3 +272,6 @@ is a token separator, which blank is equivalent to."
   (if (or $BOOT $SPAD) (next-lines-clear))
   nil)
 
+=======
+(defun get-token (token) (funcall |$token_reader| token))
+>>>>>>> upstream/master

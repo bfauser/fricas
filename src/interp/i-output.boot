@@ -40,7 +40,7 @@
 
 --% Output display routines
 
-SETANDFILEQ($plainRTspecialCharacters,[
+DEFPARAMETER($plainRTspecialCharacters, [
     '_+,      -- upper left corner   (+)
     '_+,      -- upper right corner  (+)
     '_+,      -- lower left corner   (+)
@@ -76,7 +76,7 @@ DEFVAR($texmacsFormat, false) -- if true produce Texmacs output
 
 makeCharacter n == INTERN(NUM2USTR(n))
 
-SETANDFILEQ($RTspecialCharacters,[
+DEFPARAMETER($RTspecialCharacters, [
     makeCharacter 9484,     -- upper left corner   (+)
     makeCharacter 9488,     -- upper right corner  (+)
     makeCharacter 9492,     -- lower left corner   (+)
@@ -97,9 +97,9 @@ SETANDFILEQ($RTspecialCharacters,[
     '_\       -- back slash
      ])
 
-SETANDFILEQ($specialCharacters, $plainRTspecialCharacters)
+DEFPARAMETER($specialCharacters, $plainRTspecialCharacters)
 
-SETANDFILEQ($specialCharacterAlist, '(
+DEFPARAMETER($specialCharacterAlist, '(
   (ulc  .  0)_
   (urc  .  1)_
   (llc  .  2)_
@@ -996,7 +996,7 @@ LargeMatrixp(u,width, dist) ==
     dist:=dist-3
     width:=width-3
     ans:=
-      for v in CDR u repeat
+      for v in rest u repeat
         (ans:=LargeMatrixp(v,width,dist)) => return largeMatrixAlist ans
         dist:=dist - WIDTH v
         dist<0 => return nil
@@ -1015,7 +1015,7 @@ LargeMatrixp(u,width, dist) ==
     ans
       --Relying that falling out of a loop gives nil
   ans:=
-    for v in CDR u repeat
+    for v in rest u repeat
       (ans:=LargeMatrixp(v,width,dist)) => return largeMatrixAlist ans
       dist:=dist - WIDTH v
       dist<0 => return nil
@@ -1032,7 +1032,7 @@ PushMatrix m ==
     --Adds the matrix to the look-aside list, and returns a name for it
   name:=
     for v in $MatrixList repeat
-        EQUAL(m,CDR v) => return CAR v
+        EQUAL(m, CDR v) => return first v
   name => name
   name:=INTERNL('"matrix",STRINGIMAGE($MatrixCount:=$MatrixCount+1))
   $MatrixList:=[[name,:m],:$MatrixList]
@@ -1055,7 +1055,7 @@ SubstWhileDesizing(u) ==
   -- doesn't work since rassoc seems to use an EQ test, and returns the
   -- pair anyway. JHD 28/2/93
   op = 'MATRIX =>
-    l':=SubstWhileDesizingList(CDR l)
+    l' := SubstWhileDesizingList(rest l)
     u :=
       -- CDR l=l' => u
       -- this was a CONS-saving optimisation, but it doesn't work JHD 28/2/93
@@ -1075,7 +1075,7 @@ SubstWhileDesizingList(u) ==
      tail:=res
      for i in b repeat
         if ATOM i then  RPLACD(tail,[i]) else RPLACD(tail,[SubstWhileDesizing(i)])
-        tail:=CDR tail
+        tail := rest tail
      res
    u
 
@@ -1964,14 +1964,14 @@ boxSub(x) ==
   subspan x.1+1
 
 boxSuper(x) ==
-  null CDR x => 0
+  null rest x => 0
   hl :=
     null CDDR x => 0
     true => 2 + subspan x.2 + superspan x.2
   true => hl+1 + superspan x.1
 
 boxWidth(x) ==
-  null CDR x => 0
+  null rest x => 0
   wl :=
     null CDDR x => 0
     true => WIDTH x.2
@@ -2190,9 +2190,9 @@ sumWidthA u ==
 superSubApp(u, x, y, di) ==
   a := first (u := rest u)
   b := first (u := rest u)
-  c := first (u := KDR u) or '((NOTHING . 0))
-  d := KAR   (u := KDR u) or '((NOTHING . 0))
-  e := KADR  u            or '((NOTHING . 0))
+  c := first (u := IFCDR u) or '((NOTHING . 0))
+  d := IFCAR   (u := IFCDR u) or '((NOTHING . 0))
+  e := IFCAR(IFCDR(u)) or '((NOTHING . 0))
   aox := MAX(wd := WIDTH d, we := WIDTH e)
   ar := superspan a
   ab := subspan a
@@ -2212,8 +2212,8 @@ stringer x ==
 
 superSubSub u ==
   a:= first (u:= rest u)
-  b:= KAR (u := KDR u)
-  e:= KAR KDR KDR KDR u
+  b := IFCAR (u := IFCDR u)
+  e := IFCAR IFCDR IFCDR IFCDR u
   return subspan a + MAX(height b, height e)
 
 binomApp(u,x,y,d) ==
@@ -2297,15 +2297,15 @@ altSuperSubWidth u ==
 superSubWidth u ==
   a := first (u := rest u)
   b := first (u := rest u)
-  c := first (u := KDR u) or '((NOTHING . 0))
-  d := KAR   (u := KDR u) or '((NOTHING . 0))
-  e := KADR  u            or '((NOTHING . 0))
+  c := first (u := IFCDR u) or '((NOTHING . 0))
+  d := IFCAR   (u := IFCDR u) or '((NOTHING . 0))
+  e := IFCAR(IFCDR(u)) or '((NOTHING . 0))
   return MAX(WIDTH d, WIDTH e) + MAX(WIDTH b, WIDTH c) + WIDTH a
 
 superSubSuper u ==
   a:= first (u := rest u)
-  c:= KAR (u := KDR KDR u)
-  d:= KADR u
+  c := IFCAR (u := IFCDR IFCDR u)
+  d := IFCAR(IFCDR(u))
   return superspan a + MAX(height c, height d)
 
 suScWidth u ==

@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-#include "axiom-c-macros.h"
+#include "fricas_c_macros.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -138,8 +138,7 @@ make_path_from_file(char *s, char *t)
 }
 
 /* The functions writeablep() and readablep() determine write and
-   read access of a file designated by its name.  The function
-   axiom_has_write_access is a sub-routine of writeablep.
+   read access of a file designated by its name.
 
    The access is determined based on the POSIX semantics; see
    "Advanced Programming in the UNIX Environement", section 4.5.
@@ -160,34 +159,6 @@ make_path_from_file(char *s, char *t)
 
    4. If the appropriate other access permission bit is set, access is
       allowed.  Otherwise, permission is defined.   */
-
-
-/* Return 1 if the process has write access of file as explained above.
-   Otherwise, return 0.  */
-
-static inline int
-axiom_has_write_access(const struct stat* file_info)
-{
-   int effetive_uid = geteuid();
-
-   if (effetive_uid == 0)
-      return 1;
-
-   if (effetive_uid == file_info->st_uid)
-      return file_info->st_mode & S_IWUSR;
-
-#ifdef S_IWGRP
-   if (getegid() == file_info->st_gid)
-      return file_info->st_mode & S_IWGRP;
-#endif
-
-#ifdef S_IWOTH
-   return file_info->st_mode & S_IWOTH;
-#else
-   return 0;
-#endif
-}
-
 
 /* Return
      -1 if the file designated by PATH is inexistent.
@@ -276,3 +247,105 @@ findString(char *file, char *string)
 
 }
 
+#ifdef HOST_HAS_DIRECTORY_OPERATIONS
+
+#include <dirent.h>
+
+char * fricas_copy_string(char *str)
+{
+    char * res = malloc(strlen(str) + 1);
+    if (res) {
+        strcpy(res, str);
+    } else {
+        fprintf(stderr, "Malloc failed (fricas_copy_string)\n");
+    }
+    return res;
+}
+
+int
+remove_directory(char * name)
+{
+    DIR * cur_dir = opendir(".");
+    DIR * dir;
+    int cur_dir_fd;
+    int dir_fd;
+    struct dirent * entry;
+    struct file_list {
+        struct file_list * next;
+        char * file;
+    };
+    struct file_list * flst = 0;
+    if (!cur_dir) {
+        fprintf(stderr, "Unable to open current directory\n");
+        return -1;
+    }
+    dir = opendir(name);
+    if (!dir) {
+        fprintf(stderr, "Unable to open directory to be removed\n");
+        goto err1;
+    }
+    cur_dir_fd = dirfd(cur_dir);
+    dir_fd = dirfd(dir);
+    if (cur_dir_fd == -1 || dir_fd == -1) {
+        fprintf(stderr, "dirfd failed\n");
+        goto err2;
+    }
+    while ((entry = readdir(dir))) {
+        char * fname = &(entry->d_name[0]);
+        if (!strcmp(fname, ".")) { 
+            continue; 
+        } else if (!strcmp(fname, "..")) {
+            continue;
+        } else {
+            struct file_list * npos = malloc(sizeof(*npos));
+            if (!npos) {
+                fprintf(stderr, "Malloc failed (npos)\n");
+                break;
+            }
+            npos->file = fricas_copy_string(fname);
+            if (!(npos->file)) {
+                free(npos);
+                break;
+            }
+            npos->next = flst;
+            flst = npos;
+        }
+    }
+    if (fchdir(dir_fd)) {
+        perror("Failed to change directory to directory to be removed");
+        while (flst) {
+            struct file_list * npos = flst->next;
+            free(flst->file);
+            free(flst);
+            flst = npos;
+        }
+        goto err2;
+    }
+    while (flst) {
+        struct file_list * npos = flst->next;
+        if (unlink(flst->file)) {
+	    perror("Unlink failed");
+        }
+        free(flst->file);
+        free(flst);
+        flst = npos;
+    }
+    if (fchdir(cur_dir_fd)) {
+        closedir(dir);
+        closedir(cur_dir);
+        return -1;
+    }
+  err2:
+    closedir(dir);
+  err1:
+    closedir(cur_dir);
+    {
+        int res = rmdir(name);
+        if (res) {
+            perror("rmdir failed");
+        }
+        return res;
+    }
+}
+
+#endif

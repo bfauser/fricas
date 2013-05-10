@@ -1,10 +1,10 @@
 sinclude(config/fricas.m4)
-AC_INIT([FriCAS], [2012-01-10],
+AC_INIT([FriCAS], [2013-05-03],
         [fricas-devel@googlegroups.com])
 
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
-AC_CONFIG_HEADERS([config/axiom-c-macros.h])
+AC_CONFIG_HEADERS([config/fricas_c_macros.h])
 # AM_INIT_AUTOMAKE([foreign])
 AC_PREREQ([2.59])
 
@@ -418,11 +418,11 @@ case $fricas_lisp_flavor in
        fricas_eval_flags='-eval'
        ;;
     sbcl)
-       fricas_quiet_flags='--noinform --noprint --no-userinit'
+       fricas_quiet_flags='--noinform --noprint --no-sysinit --no-userinit'
        fricas_eval_flags='--eval'
        ;;
     cmucl)
-       fricas_quiet_flags='-batch -noinit'
+       fricas_quiet_flags='-batch -nositeinit -noinit'
        fricas_eval_flags='-eval'
        ;;
     clisp)
@@ -430,7 +430,7 @@ case $fricas_lisp_flavor in
        fricas_eval_flags='-x'
        ;;
     openmcl)
-       fricas_quiet_flags=
+       fricas_quiet_flags='--no-init'
        fricas_eval_flags='--eval'
        ;;
     lispworks)
@@ -457,6 +457,16 @@ esac
 AC_SUBST(fricas_fasl_type)
 AC_SUBST(fricas_fasl_type2)
 
+fricas_debug_compiler='no'
+
+AC_ARG_ENABLE([debug-compiler],
+              [AS_HELP_STRING([--enable-debug-compiler],
+                              [(for BOOT or SPAD compiler developers) add debug
+                               information to every component of a compiler])],
+              [fricas_debug_compiler=$enableval])
+
+AC_SUBST(fricas_debug_compiler)
+
 fricas_algebra_optimization=nil
 
 AC_ARG_ENABLE([algebra-optimization],
@@ -469,9 +479,32 @@ AC_SUBST(fricas_algebra_optimization)
 
 AC_SUBST(fricas_all_prerequisites)
 
-# FIXME: Move this out of here.
-# The core runtime is always built.
-fricas_c_runtime=core
+fricas_has_directory_operations=no
+
+AC_CHECK_HEADERS([dirent.h],[
+  fricas_has_directory_operations=yes
+  AC_CHECK_DECLS([closedir, dirfd, opendir, readdir], [],
+  [fricas_has_directory_operations=no],
+  [#define _GNU_SOURCE
+   #include <dirent.h>]
+  )
+  AC_CHECK_DECLS([fchdir], [],
+  [fricas_has_directory_operations=no],
+  [#define _GNU_SOURCE
+   #include <unistd.h>]
+  )
+], [])
+
+if test x$fricas_has_directory_operations = xyes ; then
+    AC_DEFINE([HOST_HAS_DIRECTORY_OPERATIONS], [1],
+              [Host has POSIX directory operations])
+else
+  AC_MSG_WARN([Can not find directory operations])
+fi
+
+AC_SUBST(fricas_has_directory_operations)
+
+fricas_c_runtime=
 AC_SUBST(fricas_c_runtime)
 
 AC_CHECK_HEADERS([signal.h],
@@ -507,7 +540,7 @@ AC_TRY_COMPILE([
 #include <sys/socket.h>
    ], [
 int flag = MSG_NOSIGNAL;
-   ], 
+   ],
    [AC_DEFINE([HAVE_MSG_NOSIGNAL], [1], [Host has MSG_NOSIGNAL])],[])
 
 AC_TRY_COMPILE([
@@ -704,8 +737,7 @@ case $target in
         ;;
     *darwin*)
         AC_DEFINE([MACOSXplatform], [], [MACOX flavour])
-        CCF="-O2 -Wall -D_GNU_SOURCE \
-            -I/usr/include -I/usr/include/sys"
+        CCF="-O2 -Wall -D_GNU_SOURCE"
         ;;
 esac
 

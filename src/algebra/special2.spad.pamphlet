@@ -27,6 +27,10 @@ FloatSpecialFunctions() : Exports == Implementation where
       ++ Gamma(x) is the Euler Gamma function.
     Gamma : (Complex Float) -> (Complex Float)
       ++ Gamma(x) is the Euler Gamma function.
+    digamma : Float -> Float
+      ++ digamma(z) is the logarithmic derivative of \spad{Gamma(x)}.
+    digamma : (Complex Float) -> (Complex Float)
+      ++ digamma(z) is the logarithmic derivative of \spad{Gamma(x)}.
     Beta : (Float, Float) -> Float
       ++ Beta(x, y) is the Euler Beta function.
     Beta : (Complex Float, Complex Float) -> Complex Float
@@ -39,6 +43,10 @@ FloatSpecialFunctions() : Exports == Implementation where
       ++ lambertW(x) is the Lambert W function.
     lambertW : Complex(DoubleFloat) -> Complex(DoubleFloat)
       ++ lambertW(x) is the Lambert W function.
+    dilog : Complex(Float) -> Complex(Float)
+      ++ dilog(z) is the dilogaritm
+    li2 : Complex(Float) -> Complex(Float)
+      ++ li2(z) is polylog(2, z)
     -- Functions below should be local, but conditional
     rabs :  Float -> Float
       ++ Undocumented
@@ -83,7 +91,7 @@ FloatSpecialFunctions() : Exports == Implementation where
 
   Implementation ==> add
 
-    bernoulli__gamma__series(z : Complex Float, n : Integer): Complex Float ==
+    bernoulli_gamma_series(z : Complex Float, n : Integer) : Complex Float ==
        zinv := 1/z
        zk := zinv
        z2inv := zinv*zinv
@@ -95,16 +103,16 @@ FloatSpecialFunctions() : Exports == Implementation where
            s := s + ((bk*kinv)::(Complex Float))*zk
        s
 
-    logGamma__a1(z : Complex Float) : Complex Float ==
+    logGamma_a1(z : Complex Float) : Complex Float ==
        (z - ((1/2)::(Complex Float)))*log(z) - z _
            + ((1/2)::(Complex Float))_
              *((log((2 :: Float)*pi()))::(Complex Float))
 
-    logGamma__asymptotic(z : Complex Float, n : Integer): Complex Float ==
-       lg1 := logGamma__a1(z)
-       lg1 + bernoulli__gamma__series(z, n)
+    logGamma_asymptotic(z : Complex Float, n : Integer) : Complex Float ==
+       lg1 := logGamma_a1(z)
+       lg1 + bernoulli_gamma_series(z, n)
 
-    gamma__series(z : Complex Float, l : Float, n : Integer) : Complex Float ==
+    gamma_series(z : Complex Float, l : Float, n : Integer) : Complex Float ==
        tk := exp(z*(log(l)::(Complex Float)))/z
        s := tk
        for k in 1..n repeat
@@ -117,10 +125,10 @@ FloatSpecialFunctions() : Exports == Implementation where
             error "Gamma can only handle base 2 Float-s"
         l0 := bits()
         l := max(l0 + 5, 20)
-        re__z := real(z)
-        re__z < (1/2)::Float =>
+        re_z := real(z)
+        re_z < (1/2)::Float =>
             bits (l + 5)
-            re_zint := round(re__z)
+            re_zint := round(re_z)
             z1 := z - re_zint::Complex Float
             sign : Float :=
                 odd?(retract(re_zint)@Integer) => -1
@@ -128,27 +136,27 @@ FloatSpecialFunctions() : Exports == Implementation where
             z1 = 0 =>
                 bits(l0)
                 error "Pole of Gamma"
-            c__pi := (pi())::(Complex Float)
+            c_pi := (pi())::(Complex Float)
             one := 1::(Complex Float)
-            result := (sign::Float)*c__pi/(Gamma(one - z)*sin(c__pi * z1))
+            result := (sign::Float)*c_pi/(Gamma(one - z)*sin(c_pi * z1))
             bits(l0)
             result
-        abs__z := real(abs(z))
-        l :: Float > 6*abs__z =>
-            oz := max(order(abs__z), 5) :: PositiveInteger
+        abs_z := real(abs(z))
+        l :: Float > 6*abs_z =>
+            oz := max(order(abs_z), 5) :: PositiveInteger
             lz := length(oz) :: PositiveInteger
             bits(oz+lz+30)
-            loss := real(logGamma__a1(real(z)::(Complex Float))) - _
-                    real(logGamma__a1(z))
+            loss := real(logGamma_a1(real(z)::(Complex Float))) - _
+                    real(logGamma_a1(z))
             len : Float := 2*real(z) + 2*(loss + log2() * (l :: Float)) + 3::Float
             l1a := (l + order(len) + wholePart(loss/log2()) + 12)
-            l1 := max(l1a, wholePart(abs__z*log(len)/log2()) +
+            l1 := max(l1a, wholePart(abs_z*log(len)/log2()) +
                            10)::PositiveInteger
             bits(l1)
-            result := gamma__series(z, len, 3*wholePart(len) + 6)
+            result := gamma_series(z, len, 3*wholePart(len) + 6)
             bits(l0)
             result
-        llog := max(order(real(abs(logGamma__a1(z)))), 5) :: PositiveInteger
+        llog := max(order(real(abs(logGamma_a1(z)))), 5) :: PositiveInteger
         -- we sum l term, so need length(l) extra bits to
         -- compensate roundoff error
         -- we need llog extra bits in logGamma to avoid loss of
@@ -157,14 +165,14 @@ FloatSpecialFunctions() : Exports == Implementation where
         -- and inaccuracy in computing number of bits
         l1 := l + llog + (length(l)::PositiveInteger) + 12
         bits(l1)
-        result := exp(logGamma__asymptotic(z, l quo 6 + 1 ))
+        result := exp(logGamma_asymptotic(z, l quo 6 + 1 ))
         bits(l0)
         result
 
-    -- in exact arithmetic |imag(logGamma__a1(z) - logGamma(z))| < pi/2
-    logGamma__lift(z : Complex Float, lg2 : Complex Float) : Complex Float ==
+    -- in exact arithmetic |imag(logGamma_a1(z) - logGamma(z))| < pi/2
+    logGamma_lift(z : Complex Float, lg2 : Complex Float) : Complex Float ==
         lg2i := imag(lg2)
-        k := round((imag(logGamma__a1(z)) - lg2i)/(2*pi()))
+        k := round((imag(logGamma_a1(z)) - lg2i)/(2*pi()))
         lg2 + (imaginary()$(Complex Float))*((k*(2::Float)*pi())::(Complex Float))
 
 
@@ -173,11 +181,11 @@ FloatSpecialFunctions() : Exports == Implementation where
             error "Gamma can only handle base 2 Float-s"
         l0 := bits()
         l := max(l0 + 5, 20)
-        re__z := real(z)
+        re_z := real(z)
         one := 1::(Complex Float)
-        re__z < (1/2)::Float =>
+        re_z < (1/2)::Float =>
             bits (l + 5)
-            re_zint := round(re__z)
+            re_zint := round(re_z)
             z1 := z - re_zint::Complex Float
             lsign : Float :=
                 odd?(retract(re_zint)@Integer) => 1
@@ -186,20 +194,20 @@ FloatSpecialFunctions() : Exports == Implementation where
                 bits(l0)
                 error "Pole of Gamma"
             bits (l + 5)
-            c__pi := (pi())::(Complex Float)
-            result := log(c__pi) + complex(0, lsign)*c__pi
-                       - logGamma(one - z) - log(sin(c__pi * z1))
-            result := logGamma__lift(z, result)
+            c_pi := (pi())::(Complex Float)
+            result := log(c_pi) + complex(0, lsign)*c_pi
+                       - logGamma(one - z) - log(sin(c_pi * z1))
+            result := logGamma_lift(z, result)
             bits(l0)
             result
-        abs__z := real(abs(z))
-        l :: Float > 6*abs__z =>
+        abs_z := real(abs(z))
+        l :: Float > 6*abs_z =>
             l := l + 5
             if real(abs(z - one)) < ((1/4)::Float) or _
                real(abs(z - one - one)) < ((1/4)::Float) then
                 l := 2*l
             bits(l)
-            result := logGamma__lift(z, log(Gamma(z)))
+            result := logGamma_lift(z, log(Gamma(z)))
             bits(l0)
             result
         -- we sum l term, so need length(l) extra bits to
@@ -208,7 +216,7 @@ FloatSpecialFunctions() : Exports == Implementation where
         -- number of bits and constant factor
         l1 := l + length(l)::PositiveInteger + 12
         bits(l1)
-        result := logGamma__asymptotic(z, l quo 6 + 1 )
+        result := logGamma_asymptotic(z, l quo 6 + 1 )
         bits(l0)
         result
 
@@ -242,7 +250,138 @@ FloatSpecialFunctions() : Exports == Implementation where
 
     rabs(r : Complex(DoubleFloat)) : DoubleFloat == real(abs(r))
 
+    I ==> Integer
+    PI ==> PositiveInteger
+    RF ==> Float
+    CF ==> Complex(Float)
+    DF ==> DoubleFloat
     RN ==> Fraction(Integer)
+
+    digamma_euler_maclaurin(a : CF, n : I, m : I) : CF ==
+        res : CF := 0
+        for k in 0..n repeat
+            ck := 1/(k::CF + a)
+            res := res + ck
+        n1 := n + 1
+        na := n1::CF + a
+        ns := 1/na
+        ns1 : CF := 1
+        res := res + (1/2)::RF*ns - log(na)
+        n2_inv := 1/(na*na)
+        for k in 1..m repeat
+            kfac := (2*k)::RF
+            ns1 := n2_inv*ns1
+            bk := (bernoulli(2*k)$IntegerNumberTheoryFunctions)::RF
+            res := res + (bk/kfac)*ns1
+        -res
+
+    digamma_aux(a : CF, l : I) : CF ==
+        abs_a := sqrt(norm(a))
+        l::Float > 6*abs_a =>
+            digamma_euler_maclaurin(a, l quo 6 + 1, l quo 6 + 1)
+        digamma_euler_maclaurin(a, -1, l quo 6 + 1)
+
+    digamma(a : CF) : CF ==
+        l0 := bits()$RF
+        l := max(l0 + 10, 61)
+        try
+            re_a := real(a)
+            re_a < (1/2)::Float =>
+                l := l + 5
+                bits(qcoerce(l + 3*length(l)$I + 10)@PI)$RF
+                re_aint := round(re_a)
+                a1 := a - complex(re_aint, 0)
+                a1 = 0 => error "Pole of Gamma"
+                r_pi := pi()$Float
+                ap := r_pi*a1
+                -r_pi*cos(ap)/sin(ap) + digamma_aux(1 - a, l)
+            bits(qcoerce(l + 3*length(l)$I + 10)@PI)$RF
+            digamma_aux(a, l)
+        finally
+            bits(l0)$RF
+
+    digamma(z : RF) : RF == real(digamma(complex(z, 0)))
+
+    li2_series(z : CF, prec : I) : CF ==
+        nz := norm(z)
+        oz := order(nz)
+        n : I :=
+            oz < -200 => (2*prec quo (-oz - 1)) + 1
+            retract(round((2*prec)::DF*(-log(2::DF)/log(convert(nz)@DF))))@I + 1
+        res : CF := 0
+        for i in 1..n repeat
+            k : I := n + 2 - i
+            k2 := k*k
+            ck := 1/(k2::RF)
+            res := z*(res + complex(ck, 0))
+        z*(1 + res)
+
+    li2_aux(z : CF, prec : I) : CF ==
+        rz := real(z)
+        iz := imag(z)
+        siz : RF :=
+            iz > 0 => 1
+            -1
+        -- Transformations do not work when z is a qubic root of -1
+        -- We check for this and use formula:
+        --   Li(2, z^2) = 2*(Li(2, z) + Li(2, -z))
+        w := complex((1/2)::RF, siz*(1/2)::RF*sqrt(3::RF))
+        dd := norm(z - w)
+        dd < (1/8)::RF =>
+            (1/2)::RF*li2_aux(z*z, prec+2) - li2_aux(-z, prec+2)
+        nz := norm(z)
+        z1 := 1 - z
+        rpi := pi()$RF
+        pi_fac := (1/6)::RF*rpi*rpi
+        rz > (1/2)::RF =>
+            nz1 := norm(z1)
+            nz1 >= 1 =>
+                lmz := log(-z)
+                -pi_fac::CF -(1/2)::RF*lmz*lmz - li2_series(1/z, prec)
+            lz := log(z)
+            z1 = 0 => pi_fac::CF
+            lz1 := log(z1)
+            nz >= 1 =>
+                pi_fac::CF + lz*((1/2)::RF*lz - lz1) +
+                  li2_series(-z1/z, prec)
+            pi_fac::CF - lz*lz1 - li2_series(z1, prec)
+        nz >= 1 =>
+            -pi_fac::CF + (1/2)::RF*log(z1)*log(z1/(z*z)) + li2_series(1/z1, prec)
+        nz1 := norm(z1)
+        nz1 >=1 =>
+            lz1 := log(z1)
+            -(1/2)::RF*lz1*lz1 - li2_series(-z/z1, prec)
+        li2_series(z, prec)
+
+    li2(z : CF) : CF ==
+        obits := bits()$RF
+        prec := obits + 5
+        try
+            bits(obits+20)
+            li2_aux(z, prec)
+        finally
+            bits(obits)
+
+    dilog_aux(z : CF, prec : I) : CF ==
+        nz := norm(z)
+        res : CF
+        nz < (1/4)::RF =>
+            rpi := pi()$RF
+            pi_fac := (1/6)::RF*rpi*rpi
+            z = 0 => pi_fac::CF
+            lz := log(z)
+            lz1 := log(1 - z)
+            res := pi_fac::CF - lz*lz1 - li2_series(z, prec)
+        li2_aux(1 - z, prec)
+
+    dilog(z : CF) : CF ==
+        obits := bits()$RF
+        prec := obits + 5
+        try
+            bits(obits+20)
+            dilog_aux(z, prec)
+        finally
+            bits(obits)
 
     Funs ==>
         lambert_via_newton1(x : NT, w : NT, eps : RNT) : NT ==
@@ -356,7 +495,7 @@ FloatSpecialFunctions() : Exports == Implementation where
         x < (-190436/$RN 517656)::Float => error "x < -exp(-1)"
         x < (-190434/$RN 517656)::Float =>
             cbit2 := cbit quo 2
-            bits((cbit + cbit2) pretend PositiveInteger)$Float
+            bits(qcoerce(cbit + cbit2)@PositiveInteger)$Float
             e1 := exp(-1::Float)
             h2 := x + e1
             h := sqrt(h2)
@@ -395,7 +534,7 @@ FloatSpecialFunctions() : Exports == Implementation where
                 eps := abs_z*eps
             lambert_via_newton1(z, w, eps)
         cbit2 := cbit quo 2
-        bits((cbit + cbit2) pretend PositiveInteger)
+        bits(qcoerce(cbit + cbit2)@PositiveInteger)
         e1 := exp(-1$Float)
         h2 := z + complex(e1, 0)
         h := sqrt(h2)
@@ -406,10 +545,513 @@ FloatSpecialFunctions() : Exports == Implementation where
 
 @
 
+<<package FLIOUFUN FloatLiouvilianFunctions>>=
+
+)abbrev package FLIOUFUN FloatLiouvilianFunctions
+FloatLiouvilianFunctions() : Exports == Implementation where
+
+  FF ==> Complex(Float)
+  I ==> Integer
+  RF ==> Float
+  RN ==> Fraction(Integer)
+  DF ==> DoubleFloat
+
+  Exports ==> with
+    gamma : () -> FF
+      ++ gamma() is the Euler constant
+    erf : RF -> RF
+      ++ erf(f) denotes the error function
+    erf : FF -> FF
+      ++ erf(f) denotes the error function
+    erfi : RF -> RF
+      ++ erfi(f) denotes \spad{-%i*erf(%i*f)}
+    erfi : FF -> FF
+      ++ erfi(f) denotes \spad{-%i*erf(%i*f)}
+    fresnelC : RF -> RF
+      ++ fresnelC(f) denotes the Fresnel integral \spad{C}
+    fresnelC : FF -> FF
+      ++ fresnelC(f) denotes the Fresnel integral \spad{C}
+    fresnelS : RF -> RF
+      ++ fresnelS(f) denotes the Fresnel integral \spad{S}
+    fresnelS : FF -> FF
+      ++ fresnelS(f) denotes the Fresnel integral \spad{S}
+    Ei : RF -> RF
+      ++ Ei(f) denotes the exponential integral
+    Ei : FF -> FF
+      ++ Ei(f) denotes the exponential integral
+    li : RF -> RF
+      ++ li(f) denotes the logarithmic integral
+    li : FF -> FF
+      ++ li(f) denotes the logarithmic integral
+    Ci : RF -> RF
+      ++ Ci(f) denotes the cosine integral
+    Ci : FF -> FF
+      ++ Ci(f) denotes the cosine integral
+    Si : RF -> RF
+      ++ Si(f) denotes the sine integral
+    Si : FF -> FF
+      ++ Si(f) denotes the sine integral
+    Chi : RF -> RF
+      ++ Chi(f) denotes the hyperbolic cosine integral
+    Chi : FF -> FF
+      ++ Chi(f) denotes the hyperbolic cosine integral
+    Shi : RF -> RF
+      ++ Shi(f) denotes the hyperbolic sine integral
+    Shi : FF -> FF
+      ++ Shi(f) denotes the hyperbolic sine integral
+
+  Implementation ==> add
+
+    StoredConstant ==> Record(precision : Integer, value : RF)
+
+    G : StoredConstant := [-1, 0$RF]
+
+    gamma() : FF ==
+        (obits := bits()$RF) <= G.precision => complex(G.value, 0)
+        nbits := qcoerce(max(obits, 2*G.precision))@PositiveInteger
+        try
+            bits(nbits)$RF
+            G.value := -digamma(1$RF)$FloatSpecialFunctions
+            G.precision := nbits
+            complex(G.value, 0)
+        finally
+            bits(qcoerce(obits)@PositiveInteger)$RF
+
+    erf_series(z : FF, n : Integer) : FF ==
+        z2 := z*z
+        tk := z
+        res : FF := 0
+        for i in 0..n repeat
+            k1 := 2*i + 1
+            term := (1/(k1::RF))*tk
+            res := res + term
+            k2 := i + 1
+            tk := (-1/(k2::RF))*z2*tk
+        (2::RF/sqrt(pi()$RF))*res
+
+    erfc_asymptotic(z : FF, prec : Integer) : FF ==
+        eps := float(1, -2*prec, 2)
+        term : FF := 1
+        z2 := z*z
+        z2_inv := 1/(2::RF*z2)
+        res : FF := 0
+        while norm(term) > eps for k in 0.. repeat
+            res := res + term
+            term := -(2*k + 1)::RF*z2_inv*term
+        exp(-z2)*res/(z*sqrt(pi()))
+
+    erf_z(z : FF) : FF ==
+        obits := bits()$RF
+        nz := norm(z)
+        prec := obits + 20
+        oz := order(nz)
+        length(prec) > 500 =>
+            error "reqested too high precision"
+        if oz < 500 then
+           dnz := nz::DoubleFloat
+           (sp := prec*(694@I/1000)::DF) > dnz =>
+               npf := (2000@I/693)::DF*dnz + prec::DF
+               np := qcoerce(retract(round(npf))@I)@PositiveInteger
+               nf := exp(1)$DoubleFloat*dnz + sp
+               n := retract(round(nf))@I
+               bits(np)
+               res := erf_series(z, n)
+               bits(obits)
+               return res
+        bits(prec)
+        real(z) > 0 => 1 - erfc_asymptotic(z, obits + 5)
+        erfc_asymptotic(-z, obits + 5) - 1
+
+    erf(z : FF) : FF ==
+        obits := bits()$RF
+        try
+            erf_z(z)
+        finally
+            bits(obits)
+
+    erf(z : RF) : RF == real(erf(complex(z, 0)))
+
+    erfi(z : FF) : FF == complex(0, -1::RF)*erf(complex(0, 1)*z)
+
+    erfi(z : RF) : RF == imag(erf(complex(0, z)))
+
+    fresnel_c_series(z : FF, n : Integer) : FF ==
+        z2 := z*z
+        tk := z
+        z4 := z2*z2
+        res : FF := 0
+        for i in 0..n repeat
+            k1 := 4*i + 1
+            term := (1/k1::RF)*tk
+            res := res + term
+            k2 := (2*i + 1)*(2*i+2)
+            tk := (-1/k2::RF)*z4*tk
+        res
+
+    fresnel_c_asymptotic(z : FF, prec : Integer) : FF ==
+        eps := float(1, -2*prec, 2)
+        z_inv := 1/z
+        term : FF := 1
+        z2 := z*z
+        z2_inv := 1/(2::RF*z2)
+        res_c : FF := 0
+        res_s : FF := 0
+        while norm(term) > eps for k in 0.. repeat
+            res_s := res_s - term
+            term := (4*k + 1)::Float*z2_inv*term
+            res_c := res_c + term
+            term := -(4*k + 3)::Float*z2_inv*term
+        (1@I/2)::RF*z_inv*(cos(z2)*res_c + sin(z2)*res_s)
+
+    fresnel_c_z(z : FF) : FF ==
+        obits := bits()$RF
+        nz := norm(z)
+        prec := obits + 10
+        oz := order(nz)
+        length(prec) > 500 =>
+            error "reqested too high precision"
+        if oz < 500 then
+           dnz := nz::DoubleFloat
+           (sp := prec*(694@I/1000)::DF) > dnz =>
+               npf := (2000@I/693)::DF*dnz + prec::DF
+               np := qcoerce(retract(round(npf))@I)@PositiveInteger
+               nf := exp(1)$DF*dnz + sp
+               n := retract(round(nf/(2::DF)))@I
+               bits(np)
+               res := fresnel_c_series(z, n)
+               bits(obits)
+               return res
+        bits(prec)
+        pi_fac := sqrt(pi()$RF/(8::RF))
+        re_z := real(z)
+        im_z := imag(z)
+        re_z > 0 =>
+            im_z > 0 =>
+                re_z > im_z =>
+                    complex(pi_fac, 0) - fresnel_c_asymptotic(z, obits)
+                complex(0, pi_fac) - fresnel_c_asymptotic(z, obits)
+            re_z > - im_z =>
+                complex(pi_fac, 0) - fresnel_c_asymptotic(z, obits)
+            complex(0, -pi_fac) - fresnel_c_asymptotic(z, obits)
+        im_z > 0 =>
+            -re_z > im_z =>
+                complex(-pi_fac, 0) - fresnel_c_asymptotic(z, obits)
+            complex(0, pi_fac) - fresnel_c_asymptotic(z, obits)
+        -re_z > -im_z =>
+            complex(-pi_fac, 0) - fresnel_c_asymptotic(z, obits)
+        complex(0, -pi_fac) - fresnel_c_asymptotic(z, obits)
+
+    fresnelC(z : FF) : FF ==
+        obits := bits()$RF
+        try
+            bits(obits + 10)
+            pi_fac := sqrt(pi()$RF/2::RF)
+            z := pi_fac*z
+            res := fresnel_c_z(z)
+            bits(obits + 10)
+            (1/pi_fac)*res
+        finally
+            bits(obits)
+
+    fresnelC(z : RF) : RF == real(fresnelC(complex(z, 0)))
+
+    fresnel_s_series(z : FF, n : I) : FF ==
+        z2 := z*z
+        tk := z2*z
+        z4 := z2*z2
+        res : FF := 0
+        for i in 0..n repeat
+            k1 := 4*i + 3
+            term := (1/k1::RF)*tk
+            res := res + term
+            k2 := (2*i + 2)*(2*i+3)
+            tk := (-1/k2::RF)*z4*tk
+        res
+
+    fresnel_s_asymptotic(z : FF, prec : I) : FF ==
+        eps := float(1, -2*prec, 2)
+        z_inv := 1/z
+        term : FF := 1
+        z2 := z*z
+        z2_inv := 1/(2::RF*z2)
+        res_c : FF := 0
+        res_s : FF := 0
+        while norm(term) > eps for k in 0.. repeat
+            res_c := res_c + term
+            term := (4*k + 1)::RF*z2_inv*term
+            res_s := res_s + term
+            term := -(4*k + 3)::RF*z2_inv*term
+        (1@I/2)::RF*z_inv*(cos(z2)*res_c + sin(z2)*res_s)
+
+    fresnel_s_z(z : FF) : FF ==
+        obits := bits()$RF
+        nz := norm(z)
+        prec := obits + 10
+        oz := order(nz)
+        length(prec) > 500 =>
+            error "reqested too high precision"
+        if oz < 500 then
+           dnz := nz::DoubleFloat
+           (sp := prec*(694@I/1000)::DF) > dnz =>
+               npf := (2000@I/693)::DF*dnz + prec::DF
+               np := qcoerce(retract(round(npf))@I)@PositiveInteger
+               nf := exp(1)$DF*dnz + sp
+               n := retract(round(nf/(2::DF)))@I
+               bits(np)
+               res := fresnel_s_series(z, n)
+               bits(obits)
+               return res
+        bits(prec)
+        pi_fac := sqrt(pi()$RF/(8::RF))
+        re_z := real(z)
+        im_z := imag(z)
+        re_z > 0 =>
+            im_z > 0 =>
+                re_z > im_z =>
+                    complex(pi_fac, 0) - fresnel_s_asymptotic(z, obits)
+                complex(0, -pi_fac) - fresnel_s_asymptotic(z, obits)
+            re_z > - im_z =>
+                complex(pi_fac, 0) - fresnel_s_asymptotic(z, obits)
+            complex(0, pi_fac) - fresnel_s_asymptotic(z, obits)
+        im_z > 0 =>
+            -re_z > im_z =>
+                complex(-pi_fac, 0) - fresnel_s_asymptotic(z, obits)
+            complex(0, -pi_fac) - fresnel_s_asymptotic(z, obits)
+        -re_z > -im_z =>
+            complex(-pi_fac, 0) - fresnel_s_asymptotic(z, obits)
+        complex(0, pi_fac) - fresnel_s_asymptotic(z, obits)
+
+    fresnelS(z : FF) : FF ==
+        obits := bits()$RF
+        try
+            bits(obits + 10)
+            pi_fac := sqrt(pi()$RF/2::RF)
+            z := pi_fac*z
+            res := fresnel_s_z(z)
+            bits(obits + 10)
+            (1/pi_fac)*res
+        finally
+            bits(obits)
+
+    fresnelS(z : RF) : RF == real(fresnelS(complex(z, 0)))
+
+    ei_series(z : FF, n : I) : FF ==
+        tk := z
+        res : FF := 0
+        for i in 0..n repeat
+            k1 := i + 1
+            term := (1/k1::RF)*tk
+            res := res + term
+            k2 := (i + 2)
+            tk := (1/k2::RF)*z*tk
+        res
+
+    ei_asymptotic(z : FF, prec : I) : FF ==
+        eps := float(1, -2*prec, 2)
+        z_inv := 1/z
+        term := z_inv
+        res : FF := 0
+        while norm(term) > eps for k in 0.. repeat
+            res := res + term
+            term := (k + 1)::RF*z_inv*term
+        exp(z)*res
+
+    ei_z(z : FF) : FF ==
+        obits := bits()$RF
+        nz := norm(z)
+        prec := obits + 20
+        oz := order(nz)
+        length(prec) > 500 =>
+            error "reqested too high precision"
+        if oz < 1000 then
+           dnz := sqrt(nz::DF)
+           (sp := prec*(694@I/1000)::DF) > dnz =>
+               npf := (2000@I/693)::DF*dnz + prec::DF
+               np := qcoerce(retract(round(npf))@I)@PositiveInteger
+               nf := exp(1)$DF*dnz + sp
+               n := retract(round(nf))@I
+               bits(np)
+               res := ei_series(z, n)
+               bits(obits)
+               return gamma() + log(z) + res
+        bits(prec)
+        pii := pi()$RF
+        (im_z := imag(z)) < 0 =>
+            real(z) > - im_z => ei_asymptotic(z, obits + 5)
+            complex(0, -pii) + ei_asymptotic(z, obits + 5)
+        real(z) > im_z  => ei_asymptotic(z, obits + 5)
+        complex(0, pii) + ei_asymptotic(z, obits + 5)
+
+    Ei(z : FF) : FF ==
+        obits := bits()$RF
+        try
+            ei_z(z)
+        finally
+            bits(obits)
+
+    Ei(x : RF) : RF ==
+        x <= 0 => error "Ei: x <= 0"
+        real(Ei(complex(x, 0)))
+
+    li(z : FF) : FF ==
+        obits := bits()$RF
+        try
+            bits(obits + 5)
+            z1 := log(z)
+            Ei(z1)
+        finally
+            bits(obits)
+
+    li(x : RF) : RF ==
+        x <= 1 => error "li: x <= 1"
+        real(li(complex(x, 0)))
+
+    ci_series(z : FF, n : I) : FF ==
+        z2 := z*z
+        tk := (-1/2::RF)*z2
+        res : FF := 0
+        for i in 1..n repeat
+            k1 := 2*i
+            term := (1/k1::RF)*tk
+            res := res + term
+            k2 := (2*i + 1)*(2*i+2)
+            tk := (-1/k2::RF)*z2*tk
+        res
+
+    ci_asymptotic(z : FF, prec : I) : FF ==
+        eps := float(1, -2*prec, 2)
+        z_inv := 1/z
+        term : FF := 1
+        res_c : FF := 0
+        res_s : FF := 0
+        while norm(term) > eps for k in 0.. repeat
+            res_s := res_s + term
+            term := -(2*k + 1)::RF*z_inv*term
+            res_c := res_c + term
+            term := (2*k + 2)::RF*z_inv*term
+        z_inv*(cos(z)*res_c + sin(z)*res_s)
+
+    ci_z(z : FF) : FF ==
+        obits := bits()$RF
+        nz := norm(z)
+        prec := obits + 20
+        oz := order(nz)
+        length(prec) > 500 =>
+            error "reqested too high precision"
+        if oz < 1000 then
+           dnz := sqrt(nz::DF)
+           (sp := prec*(694@I/1000)::DF) > dnz =>
+               npf := (2000@I/693)::DF*dnz + prec::DF
+               np := qcoerce(retract(round(npf))@I)@PositiveInteger
+               nf := exp(1)$DF*dnz + sp
+               n := retract(round(nf/(2::DF)))@I
+               bits(np)
+               res := ci_series(z, n)
+               bits(obits)
+               return res + gamma() + log(z)
+        bits(prec)
+        real(z) > 0 =>
+            ci_asymptotic(z, obits + 5)
+        pi_fac := pi()$RF
+        imag(z) < 0 =>
+            complex(0, -pi_fac) + ci_asymptotic(z, obits + 5)
+        complex(0, pi_fac) + ci_asymptotic(z, obits + 5)
+
+    Ci(z : FF) : FF ==
+        obits := bits()$RF
+        try
+            ci_z(z)
+        finally
+            bits(obits)
+
+    Ci(x : RF) : RF ==
+        x <= 0 => error "Ci: x <= 0"
+        real(Ci(complex(x, 0)))
+
+    Chi(z : FF) : FF == Ci(complex(0, 1)*z) + log(z) - log(complex(0, 1)*z)
+
+    Chi(x : RF) : RF ==
+        x <= 0 => error "Chi: x <= 0"
+        real(Chi(complex(x, 0)))
+
+    si_series(z : FF, n : I) : FF ==
+        z2 := z*z
+        tk := z
+        res : FF := 0
+        for i in 0..n repeat
+            k1 := 2*i + 1
+            term := (1/k1::RF)*tk
+            res := res + term
+            k2 := (2*i + 2)*(2*i+3)
+            tk := (-1/k2::RF)*z2*tk
+        res
+
+    si_asymptotic(z : FF, prec : I) : FF ==
+        eps := float(1, -2*prec, 2)
+        z_inv := 1/z
+        term : FF := 1
+        res_c : FF := 0
+        res_s : FF := 0
+        while norm(term) > eps for k in 0.. repeat
+            res_c := res_c + term
+            term := (2*k + 1)::RF*z_inv*term
+            res_s := res_s + term
+            term := -(2*k + 2)::RF*z_inv*term
+        z_inv*(cos(z)*res_c + sin(z)*res_s)
+
+    si_z(z : FF) : FF ==
+        obits := bits()$RF
+        nz := norm(z)
+        prec := obits + 20
+        oz := order(nz)
+        length(prec) > 500 =>
+            error "reqested too high precision"
+        if oz < 1000 then
+           dnz := sqrt(nz::DF)
+           (sp := prec*(694@I/1000)::DF) > dnz =>
+               npf := (2000@I/693)::DF*dnz + prec::DF
+               np := qcoerce(retract(round(npf))@I)@PositiveInteger
+               nf := exp(1)$DF*dnz + sp
+               n := retract(round(nf/(2::DF)))@I
+               bits(np)
+               res := si_series(z, n)
+               bits(obits)
+               return res
+        bits(prec)
+        pi_fac := pi()$RF/(2::RF)
+        real(z) > 0 =>
+            complex(pi_fac, 0) - si_asymptotic(z, obits + 5)
+        -(complex(pi_fac, 0) - si_asymptotic(-z, obits + 5))
+
+    Si(z : FF) : FF ==
+        obits := bits()$RF
+        try
+            si_z(z)
+        finally
+            bits(obits)
+
+    Si(z : RF) : RF == real(Si(complex(z, 0)))
+
+    Shi(z : FF) : FF == -complex(0, 1)*Si(complex(0, 1)*z)
+
+    Shi(x : RF) : RF == real(Shi(complex(x, 0)))
+
+@
+
 <<package ELIPIDF DoubleFloatEllipticIntegrals>>=
 
 )abbrev package ELIPIDF DoubleFloatEllipticIntegrals
 )boot $tryRecompileArguments := nil
+++ Description:
+++  \spad{DoubleFloatEllipticIntegrals} implements machine
+++  A package for computing machine precision real and
+++  complex elliptic integrals, using algorithms given by Calrson.
+++  Note: Complex versions may misbehave for very large/small
+++  arguments and close to branch cuts.
+++ References:
+++   B.C. Carlson, Numerical computation of real or complex
+++   elliptic integrals, Numerical Algorithms 10 (1995) 13-26.
+
 DoubleFloatEllipticIntegrals : Exports == Implementation where
   RF ==> DoubleFloat
   CF ==> Complex(DoubleFloat)
@@ -472,30 +1114,31 @@ DoubleFloatEllipticIntegrals : Exports == Implementation where
 
   Implementation ==> add
 
-      errtol : RF := 0.0001::RF
-      uplim : RF := max()$RF/5::RF
-      lolim : RF := 10::RF/max()$RF
-
       half : RF := 1/2::RF
       one_third : RF := 1/3::RF
       one_fourth : RF := 1/4::RF
       one_fifth : RF := 1/5::RF
 
-      c0_RC : RF := 3::RF/10::RF
-      c1_RC : RF := 1/7::RF
-      c2_RC : RF := 3750::RF/10000::RF
-      c3_RC : RF := 9::RF/22::RF
+      c2_RC : RF := 3::RF/10::RF
+      c3_RC : RF := 1/7::RF
+      c4_RC : RF := 3::RF/8::RF
+      c5_RC : RF := 9::RF/22::RF
+      c6_RC : RF := 159::RF/208::RF
+      c7_RC : RF := 9::RF/8::RF
+      inv_err_RC := 94::RF -- roughly (3*2.0^-54)^(-1/8)
 
       c1_RF : RF := 1/24::RF
       c2_RF : RF := 1/10::RF
       c3_RF : RF := 3::RF/44::RF
       c4_RF : RF := 1/14::RF
+      inv_err_RF := 427::RF -- roughly (3*2.0^-54)^(-1/6)
 
       c1_RD := -3::RF/14::RF
       c2_RD := 1/6::RF
       c3_RD := 9::RF/22::RF
       c4_RD := 3::RF/26::RF
       c5_RD := 3::RF/2::RF
+      inv_err_RJ := 646::RF -- roughly (2.0^-54/4)^(-1/6)
 
       c1_RJ : RF := 3::RF/14::RF
       c3_RJ : RF := 3::RF/22::RF
@@ -505,33 +1148,38 @@ DoubleFloatEllipticIntegrals : Exports == Implementation where
 
       Funs ==>
           ellipticRC(x : DF, y : DF) : DF ==
+              mu := one_third*(x + y + y)
+              Q := inv_err_RC*rabs(mu - x)
               repeat
-                  -- mu := one_third*(x + y + y)
-                  -- sn := (y + mu)/mu - 2::DF
-                  mm := (x + y + y)
-                  sn := (y - x)/mm
-                  rabs(sn) < errtol =>
-                      mu := one_third*mm
-                      s := sn*sn*(c0_RC::DF + sn*(c1_RC::DF
-                                    + sn*(c2_RC::DF + sn*c3_RC)))
-                      return (1 + s)/qsqrt(mu)
+                  Q < rabs(mu) =>
+                      mu_inv := 1/mu
+                      sn := mu_inv*(y - mu)
+                      sn2 := sn*sn
+                      S1 := c3_RC::DF + sn2*(c5_RC::DF + sn2*c7_RC::DF)
+                      S0 := c2_RC::DF + sn2*(c4_RC::DF + sn2*c6_RC::DF)
+                      return qsqrt(mu_inv)*(1 + sn2*(S0 + sn*S1))
                   lambda := (2::DF)*qsqrt(x)*qsqrt(y) + y
                   x := one_fourth*(x + lambda)
                   y := one_fourth*(y + lambda)
+                  mu := one_fourth*(mu + lambda)
+                  Q := one_fourth*Q
 
           ellipticRF(x : DF, y : DF, z : DF) : DF ==
+              mu := one_third*(x + y + z)
+              xadev := rabs(mu - x)
+              yadev := rabs(mu - y)
+              zadev := rabs(mu - z)
+              Q := inv_err_RF*max(xadev, max(yadev, zadev))
               repeat
-                  mu := one_third*(x + y + z)
-                  mu_inv := 1/mu
-                  xndev := (mu - x)*mu_inv
-                  yndev := (mu - y)*mu_inv
-                  zndev := (mu - z)*mu_inv
-                  epsilon := max(rabs(xndev), max(rabs(yndev), rabs(zndev)))
-                  epsilon < errtol =>
+                  Q < rabs(mu) =>
+                      mu_inv := 1/mu
+                      xndev := (mu - x)*mu_inv
+                      yndev := (mu - y)*mu_inv
+                      zndev := (mu - z)*mu_inv
                       e2 := xndev*yndev - zndev*zndev
                       e3 := xndev*yndev*zndev
-                      s := 1 + (c1_RF*e2 - c2_RF::DF - c3_RC*e2)*e2 + c4_RF*e3
-                      return s/qsqrt(mu)
+                      s := 1 + (c1_RF*e2 - c2_RF::DF - c3_RC*e3)*e2 + c4_RF*e3
+                      return s*qsqrt(mu_inv)
                   xnroot := qsqrt(x)
                   ynroot := qsqrt(y)
                   znroot := qsqrt(z)
@@ -539,17 +1187,23 @@ DoubleFloatEllipticIntegrals : Exports == Implementation where
                   x := one_fourth*(x + lambda)
                   y := one_fourth*(y + lambda)
                   z := one_fourth*(z + lambda)
+                  mu := one_fourth*(mu + lambda)
+                  Q := one_fourth*Q
 
           ellipticRD(x : DF, y : DF, z : DF) : DF ==
               sigma : DF := 0
               power4 : DF := 1
+              mu := one_fifth*(x + y + 3::DF*z)
+              xadev := rabs(mu - x)
+              yadev := rabs(mu - y)
+              zadev := rabs(mu - z)
+              Q := inv_err_RJ*max(xadev, max(yadev, zadev))
               repeat
-                  mu := one_fifth*(x + y + 3::DF*z)
-                  xndev := (mu - x)/mu
-                  yndev := (mu - y)/mu
-                  zndev := (mu - z)/mu
-                  epsilon := max(rabs(xndev), max(rabs(yndev), rabs(zndev)))
-                  epsilon < errtol =>
+                  Q < rabs(mu) =>
+                      mu_inv := 1/mu
+                      xndev := (mu - x)*mu_inv
+                      yndev := (mu - y)*mu_inv
+                      zndev := (mu - z)*mu_inv
                       ea := xndev*yndev
                       eb := zndev*zndev
                       ec := ea - eb
@@ -559,7 +1213,8 @@ DoubleFloatEllipticIntegrals : Exports == Implementation where
                                 - c5_RD*c4_RD*zndev*ef)
                       s2 := zndev*(c2_RD*ef + zndev*(-c3_RD*ec
                                + zndev*c4_RD*ea))
-                      return 3::RF*sigma + power4*(1 + s1 + s2)/(mu*qsqrt(mu))
+                      ss := (1 + (s1 + s2))*mu_inv*qsqrt(mu_inv)
+                      return 3::RF*sigma + power4*ss
                   xnroot := qsqrt(x)
                   ynroot := qsqrt(y)
                   znroot := qsqrt(z)
@@ -569,30 +1224,37 @@ DoubleFloatEllipticIntegrals : Exports == Implementation where
                   x := one_fourth*(x + lambda)
                   y := one_fourth*(y + lambda)
                   z := one_fourth*(z + lambda)
+                  mu := one_fourth*(mu + lambda)
+                  Q := one_fourth*Q
 
           ellipticRJ(x : DF, y : DF, z : DF, p : DF) : DF ==
               sigma : DF := 0
               power4 : DF := 1
+              mu := one_fifth*(x + y + z + p + p)
+              xadev := rabs(mu - x)
+              yadev := rabs(mu - y)
+              zadev := rabs(mu - z)
+              padev := rabs(mu - p)
+              Q := inv_err_RJ*max(max(xadev, yadev), max(zadev, padev))
               repeat
-                  mu := one_fifth*(x + y + z + p + p)
-                  xndev := (mu - x)/mu
-                  yndev := (mu - y)/mu
-                  zndev := (mu - z)/mu
-                  pndev := (mu - p)/mu
-                  epsilon := max(rabs(xndev), max(rabs(yndev),
-                                                max(rabs(zndev), rabs(pndev))))
-                  epsilon < errtol =>
+                  Q < rabs(mu) =>
+                      mu_inv := 1/mu
+                      xndev := (mu - x)*mu_inv
+                      yndev := (mu - y)*mu_inv
+                      zndev := (mu - z)*mu_inv
+                      pndev := (mu - p)*mu_inv
                       ea := xndev*(yndev + zndev) + yndev*zndev
                       eb := xndev*yndev*zndev
                       ec := pndev*pndev
                       e2 := ea - 3::RF*ec
                       e3 := eb + 2::RF*pndev*(ea - ec)
-                      s1 := 1 + e2*(-c1_RJ::DF + c5_RJ*e2 - c6_RJ*e3)
+                      s1 := e2*(-c1_RJ::DF + c5_RJ*e2 - c6_RJ*e3)
                       s2 := eb*(half*one_third::DF +
                                 pndev*(-(c3_RJ + c3_RJ)::DF + pndev*c4_RJ))
                       s3 := pndev*ea*(one_third::DF - pndev*c3_RJ)
                             - one_third*pndev*ec
-                      return 3::RF*sigma + power4*(s1 + s2 + s3)/(mu*qsqrt(mu))
+                      ss := (1 + (s1 + s2 + s3))*mu_inv*qsqrt(mu_inv)
+                      return 3::RF*sigma + power4*ss
                   xnroot := qsqrt(x)
                   ynroot := qsqrt(y)
                   znroot := qsqrt(z)
@@ -606,6 +1268,8 @@ DoubleFloatEllipticIntegrals : Exports == Implementation where
                   y := one_fourth*(y + lambda)
                   z := one_fourth*(z + lambda)
                   p := one_fourth*(p + lambda)
+                  mu := one_fourth*(mu + lambda)
+                  Q := one_fourth*Q
 
           ellipticF(z : DF, m : DF) : DF ==
               z*ellipticRF(1 - z*z, 1 - m*z*z, 1)
@@ -671,25 +1335,41 @@ FloatEllipticFunctions() : with
                              List Complex Float
       ++ weierstrassHalfPeriods(g2, g3) computes half periods of
       ++ Weierstrass elliptic functions from invariants g2, g3.
+    weierstrassInvariants : (Complex Float, Complex Float) ->
+                             List Complex Float
+      ++ weierstrassInvariants(w1, w2) computes invariants g2, g3 of
+      ++ Weierstrass elliptic functions from half periods w1, w2.
+    modularInvariantJ : (Complex Float) -> Complex Float
+      ++ modularInvariantJ(tau) computes modular invariant j,
+      ++ that is \spad{1728*g2^3/(g2^3 - 27*g3^2)} where g2, g3
+      ++ are invariants corresponding to half periods w1, w2
+      ++ such that \spad{tau = w1/w2}.
     ellipticK : Float -> Float
       ++ ellipticK(m) is the complete elliptic integral of the first kind.
     ellipticK : Complex Float -> Complex Float
       ++ ellipticK(m) is the complete elliptic integral of the first kind.
     ellipticE : Float -> Float
       ++ ellipticE(m) is the complete elliptic integral of the second kind.
+    ellipticE : Complex Float -> Complex Float
+      ++ ellipticE(m) is the complete elliptic integral of the second kind.
     ellipticE : (Float, Float) -> Float
       ++ ellipticE(z, m) is the incomplete elliptic integral of the second
       ++ kind.
+    ellipticE : (Complex Float, Complex Float) -> Complex Float
+      ++ ellipticE(z, m) is the incomplete elliptic integral of the second
+      ++ kind.
     ellipticF : (Float, Float) -> Float
+      ++ ellipticF(z, m) is the incomplete elliptic integral of first kind.
+    ellipticF : (Complex Float, Complex Float) -> Complex Float
       ++ ellipticF(z, m) is the incomplete elliptic integral of first kind.
     -- Functions below should be local but overloaded
     rabs : Float -> Float
       ++ Undocumented.
     rabs : Complex Float -> Float
       ++ Undocumented.
-    landen1 : Float -> List Float
+    landen1 : (Float, List Float) -> List Float
       ++ Undocumented.
-    landen1 : Complex Float -> List Complex Float
+    landen1 : (Complex Float, List Complex Float) -> List Complex Float
       ++ Undocumented.
     landen2 : (Float, List Float, Float) -> List Float
       ++ Undocumented.
@@ -717,8 +1397,7 @@ FloatEllipticFunctions() : with
     rabs(r : CF) : Float == real(abs(r))
 
     Funs ==>
-      landen1(m1 : NT) : List NT ==
-        res : List NT := []
+      landen1(m1 : NT, res : List NT) : List NT ==
         while rabs(m1) < 0.25 repeat
             kp := sqrt(m1)
             kn1 := 2*kp/(1+kp)
@@ -749,7 +1428,7 @@ FloatEllipticFunctions() : with
       landen(m : NT, eps : Float) : List NT ==
         res : List NT := []
         if rabs(m1 := 1 - m) < 0.25 then
-            res := landen1(m1)
+            res := landen1(m1, res)
             m := 1 - first(res)
             res := rest(res)
         landen2(m, res, eps)
@@ -798,7 +1477,7 @@ FloatEllipticFunctions() : with
         bits(obits)
         res
 
-    -- Compute 1-sin(z) for z in [0,\pi] with small relative error
+    -- Compute 1-sin(z) for z in [0, \pi] with small relative error
     sin1(z : Float) : Float ==
         if z < 1 or z > 2.0 then
             1 - sin(z)
@@ -807,7 +1486,7 @@ FloatEllipticFunctions() : with
             z1 := z1/2
             2*sin(z1)^2
 
-    -- assumption z \in [0,\pi]
+    -- assumption z \in [0, \pi]
     sn21(z : Float, ll : List Float) : Float==
         res := sin1(z)
         for k in ll repeat
@@ -834,8 +1513,9 @@ FloatEllipticFunctions() : with
             kp1 := 2.0/(1 + kp)
             m1 := 2*kp1 - kp1^2
             z := z/kp1
+            ll : List(Float) := []
             if m1 < 0.25 then
-                ll := landen1(m1)
+                ll := landen1(m1, ll)
                 m := 1 - first(ll)
                 ll := landen2(m, rest(ll), eps)
             else
@@ -914,6 +1594,7 @@ FloatEllipticFunctions() : with
     -- either [1, sn, cn, dn] (if no pole)
     -- or [0, 1, lim (cn/sn), lim(dn/ sn)] (in pole)
     sn_cn_dn(z : CF, m : CF) : List CF ==
+        m = 0 => [1, sin(z), cos(z), 1]
         obits := bits()
         prec := obits + 20
         m = 1 =>
@@ -944,7 +1625,16 @@ FloatEllipticFunctions() : with
         z1 := z/kk
         iz := imag(z1)
         m1 := 1 - m
-        ll2 := landen(m1, eps)
+        ms0 := sqrt(m)
+        ll2 : List(Complex(Float))
+        if rabs(ms0) < 0.25 then
+            kn := 2*ms0/(1+ms0)
+            ll2 := landen1(2*kn - kn^2, [1 - kn])
+            mp := 1 - first(ll2)
+            ll2 := landen2(mp, rest(ll2), eps)
+        else
+            kn := (1 - ms0)/(1 + ms0)
+            ll2 := landen2(kn^2, [kn], eps)
         iu := complex(0, 1.0)
         kk2 := kprod(ll2)
         ppi : Float := pi()/2
@@ -967,19 +1657,19 @@ FloatEllipticFunctions() : with
         d1 := (1 - ms2*(ctwo - s2))/den
         ni := positiveRemainder(ni, 4)
         nr := positiveRemainder(nr, 4)
-        ms1 := sqrt(m1)
         iu := complex(0, 1.0)
         if nr >= 2 then
             (s1, c1, d1) := (-s1, -c1, d1)
             nr := nr - 2
         if nr = 1 then
+            ms1 := sqrt(m1)
             (s1, c1, d1) := (c1/d1, -ms1*s1/d1, ms1/d1)
         if ni >= 2 then
             (s1, c1, d1) := (s1, -c1, -d1)
             ni := ni - 2
         ni = 0 => [1, s1, c1, d1]
-        s1 = 0 => [0, 1, -iu*d1, -iu*ms1]
-        [1, 1/(ms1*s1), -iu*d1/(ms1*s1), -iu*c1/s1]
+        s1 = 0 => [0, 1, -iu*d1, -iu*ms0]
+        [1, 1/(ms0*s1), -iu*d1/(ms0*s1), -iu*c1/s1]
 
     jacobiSn(z : CF, m : CF) ==
         pl := sn_cn_dn(z, m)
@@ -1054,6 +1744,108 @@ FloatEllipticFunctions() : with
         bits(obits)
         res
 
+    -- This routine expects argument which is reduced to the
+    -- fundamental region,
+    -- returns [theta2(0, tau)^2, theta3(0, tau)^2]
+    theta0(tau : Complex(Float)) : List(Complex(Float)) ==
+        prec := bits()
+        tresh := ((38/100)*prec)::Float
+        k : Integer := 0
+        not((1/2)::Float < imag(tau)) =>
+            error "imag(tau) must be bigger than 1/2"
+        otau := tau
+        while imag(tau) < tresh repeat
+            tau := (2::Float)*tau
+            k := k + 1
+        q2 := exp((1/2)::Float*pi()$Float*imaginary()*tau)
+        q := q2*q2
+        t2 := (2::Float)*(1 + q*q)
+        t3 := 1 + (2::Float)*q
+        -- Now we work with squares
+        t2 := q2*t2*t2
+        t3 := t3*t3
+        k = 0 => [t2, t3]
+        rtd := (1/2)::Float*pi()*real(otau)
+        iq2 := exp(-imaginary()*rtd)
+        liq2 : List(Complex(Float)) := []
+        for i in 1..k repeat
+            liq2 := cons(iq2, liq2)
+            iq2 := iq2*iq2
+        for i in 1..k for iq2 in liq2 repeat
+            nt3 := t3 + t2
+            t2 := (2::Float)*sqrt(t2*t3)
+            pp := t2*iq2
+            if real(pp) < 0 then
+                t2 := -t2
+            t3 := nt3
+        [t2, t3]
+
+    modularInvariants(tau : Complex Float) : List(Complex Float) ==
+        td := theta0(tau)
+        t2 := first(td)
+        t3 := first(rest(td))
+        k := t2/t3
+        m := k*k
+        m2 := m*m
+        g2 := (4/3)::Float*(m2 - m + 1)
+        g3 := (4/27)::Float*(2::Float*m*m2 - (3::Float)*m2 - (3::Float)*m +
+              2::Complex(Float))
+        [g2, g3, t3]
+
+    reduce_periods(w1 : Complex Float, w2 : Complex Float
+                  ) : List(Complex Float) ==
+        aw1 := rabs(w1)
+        aw2 := rabs(w2)
+        repeat
+            if aw2 > aw1 then
+                (w1, w2) := (w2, w1)
+                (aw1, aw2) := (aw2, aw1)
+            tau := w1/w2
+            if imag(tau) < 0 then
+                tau := -tau
+                w1 := -w1
+            rit := round(real(tau))
+            rit = 0 => return [w1, w2]
+            w1 := w1 - rit*w2
+            (2/$Fraction(Integer) 3)::Float < imag(tau) => return [w1, w2]
+            aw1 := rabs(w1)
+
+    modularInvariantJ(tau : Complex Float) : Complex Float ==
+        not(0 < imag(tau)) => error "need imag(tau) > 0"
+        obits := bits()
+        try
+            bits(3*obits + 20)
+            nw := reduce_periods(tau, 1)
+            bits(obits + 20)
+            tau := nw(1)/nw(2)
+            md := modularInvariants(tau)
+            g2 := md(1)
+            g3 := md(2)
+            g2_3 := g2*g2*g2
+            1728*g2_3/(g2_3 - 27*g3*g3)
+        finally
+            bits(obits)
+
+    weierstrassInvariants(w1, w2) ==
+        obits := bits()
+        try
+            bits(3*obits + 20)
+            nw := reduce_periods(w1, w2)
+            bits(obits + 20)
+            w1 := nw(1)
+            w2 := nw(2)
+            tau := w1/w2
+            md := modularInvariants(tau)
+            g2 := md(1)
+            g3 := md(2)
+            tf := md(3)
+            s := pi()$Float*tf/w2
+            s2 := s*s
+            s4 := s2*s2
+            [s4*g2, s2*s4*g3]
+        finally
+            bits(obits)
+
     ellipticF(z : Float, m : Float) : Float ==
         m = 1 => atanh(z)
         obits := bits()
@@ -1083,6 +1875,51 @@ FloatEllipticFunctions() : with
         bits(obits)
         res
 
+    ellipticF_aux(z : CF, m : CF) : CF ==
+        m = 1 => atanh(z)
+        obits := bits()
+        rabs(m) > 1 =>
+            bits(obits + 20)
+            m2 := sqrt(m)
+            z2 := m2*z
+            ellipticF_aux(z2, 1/m)/m2
+        m = 0 => asin(z)
+        z = 1 => ellipticK(m)
+        z = -1 => -ellipticK(m)
+        prec := obits + 20
+        bits(prec)
+        eps := two_to_minus_n(prec quo 2)
+        ll := landen(m, eps)
+        res := kprod(ll)
+        ll := reverse!(ll)
+        sf : Float := 1
+        nz := norm(z)
+        if 1$Float < nz then
+            z0 := z
+            z2 := z*z
+            z2 := (1 - sqrt(1 - z2))/(1 + sqrt(1 - m*z2))
+            nz := norm(z2)
+            sf := 2::Float
+            cnz := sqrt(1 - z2)
+            dnz := sqrt(1 - m*z2)
+            snf := cnz*dnz/(1 - m*z2*z2)
+            z := sqrt(z2)
+            zz := z*snf
+            if real(conjugate(z0)*zz) < 0 then
+                z := -z
+        for k in ll repeat
+            delta := (1 + k)^2 - 4*k*z^2
+            z := 2*z/(1 + k + sqrt(delta))
+        sf*res*asin(z)
+
+    ellipticF(z : CF, m : CF) : CF ==
+        m = 1 => atanh(z)
+        obits := bits()
+        try
+            ellipticF_aux(z, m)
+        finally
+            bits(obits)
+
     ellipticE(m : Float) : Float ==
         m >= 1 => error "ellipticE: m >=1"
         m = 0 => pi()/2
@@ -1102,8 +1939,30 @@ FloatEllipticFunctions() : with
         bits(obits)
         e_val
 
+    ellipticE(m : CF) : CF ==
+        m = 1 => error "ellipticE: m = 1"
+        e_val := (pi()/(2::Float))::CF
+        m = 0 => e_val
+        obits := bits()
+        try
+            prec := obits + 20
+            bits(prec)
+            eps := two_to_minus_n(prec quo 2)
+            ll := landen(m, eps)
+            llr := reverse(ll)
+            f_val := e_val
+            for k in ll repeat
+                k1 := 1 + k
+                f_val := k1*f_val
+                k1inv := 1/k1
+                p := (1 - k)*k1inv
+                e_val := 2*k1inv*e_val - p*f_val
+            e_val
+        finally
+            bits(obits)
+
     ellipticE(z : Float, m : Float) : Float ==
-        m = 1 => atanh(z)
+        m = 1 => z
         obits := bits()
         m > 1 =>
             bits(obits + 20)
@@ -1141,6 +2000,64 @@ FloatEllipticFunctions() : with
             e_val := 2*k1inv*e_val - p*f_val + r
         bits(obits)
         e_val
+
+    ellipticE_aux(z : CF, m : CF) : CF ==
+        obits := bits()
+        rabs(m) > 1 =>
+            bits(obits + 20)
+            m2 := sqrt(m)
+            z2 := m2*z
+            m2*ellipticE_aux(z2, 1/m) - (m - 1)*z
+        m = 0 => asin(z)
+        z = 1 => ellipticE(m)
+        z = -1 => -ellipticE(m)
+        prec := obits + 20
+        bits(prec)
+        eps := two_to_minus_n(prec quo 2)
+        ll := landen(m, eps)
+        llr := reverse(ll)
+        lz : List CF := []
+        sf : Float := 1
+        nz := norm(z)
+        res0 : CF := 0
+        if 1$Float < nz then
+            z2 := z*z
+            z2 := (1 - sqrt(1 - z2))/(1 + sqrt(1 - m*z2))
+            res0 := z2*z
+            nz := norm(z2)
+            sf := 2::Float
+            z0 := z
+            z := sqrt(z2)
+            cnz := sqrt(1 - z2)
+            dnz := sqrt(1 - m*z2)
+            snf := cnz*dnz/(1 - m*z2*z2)
+            zz := z*snf
+            if real(conjugate(z0)*zz) < 0 then
+                z := -z
+        for k in llr repeat
+            delta := (1 + k)^2 - 4*k*z^2
+            z := 2*z/(1 + k + sqrt(delta))
+            lz := cons(z, lz)
+        f_val := e_val := asin(z)
+        for k in ll for z in lz repeat
+            k1 := 1 + k
+            f_val := k1*f_val
+            k1inv := 1/k1
+            p := (1 - k)*k1inv
+            z2 := z*z
+            k_z2 := k*z2
+            r := sqrt((1 - z2)*(1 - k*k_z2))
+            r := (1 - p)*z*r/(1 + k_z2)
+            e_val := 2*k1inv*e_val - p*f_val + r
+        sf*e_val - m*res0
+
+    ellipticE(z : CF, m : CF) : CF ==
+        m = 1 => z
+        obits := bits()
+        try
+            ellipticE_aux(z, m)
+        finally
+            bits(obits)
 
     mkr(rr : CF, g23 : CF, r1 : CF) : CF ==
         pr := r1*rr
@@ -1209,8 +2126,20 @@ SpecialFunctionUnivariateTaylorSeries(Coef, UTS) :
 
     Exports ==> with
         lambertW0 : UTS -> UTS
-          ++ lambertW0(x) applies labertW to x.  x must have
+          ++ lambertW0(x) applies lambertW to x.  x must have
           ++ no term of order 0.
+        weierstrassP0 : (Coef, Coef, UTS) -> UTS
+          ++ weierstrassP0(g2, g3, x) computes finite part of
+          ++ weierstrassP(g2, g3, x). x must have no term of order 0.
+        weierstrassPPrime0 : (Coef, Coef, UTS) -> UTS
+          ++ weierstrassPPrime0(g2, g3, x) computes finite part of
+          ++ weierstrassPPrime(g2, g3, x). x must have no term of order 0.
+        weierstrassZeta0 : (Coef, Coef, UTS) -> UTS
+          ++ weierstrassZeta0(g2, g3, x) computes finite part of
+          ++ weierstrassZeta(g2, g3, x). x must have no term of order 0.
+        weierstrassSigma0 : (Coef, Coef, UTS) -> UTS
+          ++ weierstrassSigma0(g2, g3, x) computes
+          ++ weierstrassSigma(g2, g3, x). x must have no term of order 0.
 
     Implementation ==> add
 
@@ -1221,6 +2150,47 @@ SpecialFunctionUnivariateTaylorSeries(Coef, UTS) :
             series(YS((s : ST) : ST +-> lazyIntegrate(0,
                       coefficients(dx*exp(-series(s)$UTS)
                                *(1$UTS +$UTS series(s))^(-1)))$STT))
+
+        compose(s : ST, x : UTS) : UTS ==
+            series(compose(s, coefficients(x))$STT)
+
+        -- p_re computes series of weierstrassP starting from term k
+        -- lcr is list c_{k-1}, ..., c3, c2
+        p_re(k : Integer, lcr : List Coef) : ST == delay
+            lm := reverse lcr
+            ss : Coef := 0
+            -- ck = (3/(2*k+1)*(k-3))\sum_{m=2}^{k-2}c_m*c_{k-m}
+            for m in 2..(k-2) for cm in lm for ck_m in rest(lcr) repeat
+                ss := ss + cm*ck_m
+            two : Coef := 1 + 1
+            three := two + 1
+            ck := three*ss/((k*two + 1)*(k*1 - three))
+            concat(ck, p_re(k + 1, cons(ck, lcr)))
+
+        p_stream(g2 : Coef, g3 : Coef) : ST ==
+            c2 : Coef := 1 + 1
+            c4 := c2 + c2
+            c5 := c4 + 1
+            c20 := c4*c5
+            c28 := c4*(c5 + c2)
+            concat(0, concat(g2/c20, concat(g3/c28,
+                   p_re(4, [g3/c28, g2/c20]))))
+
+        weierstrassP0(g2 : Coef, g3 : Coef, x : UTS) : UTS ==
+            compose(p_stream(g2, g3), x*x)
+
+        weierstrassPPrime0(g2 : Coef, g3 : Coef, x : UTS) : UTS ==
+            (1 + 1)*x*compose(deriv(p_stream(g2, g3))$STT, x*x)
+
+        weierstrassZeta0(g2 : Coef, g3 : Coef, x : UTS) : UTS ==
+            ps2 := compose(p_stream(g2, g3), coefficients(x*x))$STT
+            -series(integrate(0, ps2)$STT)
+
+        weierstrassSigma0(g2 : Coef, g3 : Coef, x : UTS) : UTS ==
+            ps2 := compose(p_stream(g2, g3), coefficients(x*x))$STT
+            zs := integrate(0, ps2)$STT
+            lsigma := integrate(0, -$STT zs)
+            x*series(exp(lsigma)$StreamTranscendentalFunctions(Coef))
 
 @
 

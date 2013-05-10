@@ -18,7 +18,7 @@
 ++  SmallOrdinal implements ordinal numbers up to epsilon_0.  \spad{+}
 ++  and \spad{*} are "natural" addition and multiplication of ordinals.
 ++  Avaliable separately are "ordered" operataions.
-SmallOrdinal: Join(OrderedAbelianMonoid, SemiRing, CancellationAbelianMonoid,
+SmallOrdinal : Join(OrderedAbelianMonoid, SemiRing, CancellationAbelianMonoid,
                    RetractableTo(NonNegativeInteger)) with
     omega : () -> %
       ++ omega() is the first infinite ordinal
@@ -59,6 +59,10 @@ SmallOrdinal: Join(OrderedAbelianMonoid, SemiRing, CancellationAbelianMonoid,
     one? p == p::Rep =$Rep 1
 
     p1 = p2  == p1::Rep =$Rep p2::Rep
+
+    hashUpdate!(hs, p) ==
+        zero?(p) => update!(hs, 6672::SingleInteger)$HashState
+        hashUpdate!(hs, p::Rep)$Rep
 
     coerce(n : N) : % == monomial(n, 0$%)$Rep
 

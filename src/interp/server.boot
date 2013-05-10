@@ -64,18 +64,17 @@ DEFCONSTANT($CreateFrameAnswer, 50)
 
 -- Assoc list of interpreter frame names and unique integer identifiers
 
-SETANDFILEQ($frameAlist, nil)
-SETANDFILEQ($frameNumber, 0)
-SETANDFILEQ($currentFrameNum, 0)
-SETANDFILEQ($EndServerSession, false)
-SETANDFILEQ($NeedToSignalSessionManager, false)
+DEFPARAMETER($frameAlist, nil)
+DEFPARAMETER($frameNumber, 0)
+DEFPARAMETER($currentFrameNum, 0)
+DEFPARAMETER($EndServerSession, false)
+DEFPARAMETER($NeedToSignalSessionManager, false)
 
 serverReadLine(stream) ==
 -- used in place of read_-line in a scratchpad server system.
   FORCE_-OUTPUT()
   not $SpadServer =>
     read_-line(stream)
-  IN_-STREAM: fluid := stream
   _*EOF_*: fluid := NIL
   line :=
    while not $EndServerSession and not _*EOF_* repeat
@@ -129,8 +128,6 @@ serverReadLine(stream) ==
 
 parseAndInterpret str ==
   $InteractiveMode :fluid := true
-  $BOOT: fluid := NIL
-  $SPAD: fluid := true
   $e:fluid := $InteractiveFrame
   ncParseAndInterpretString str
 
@@ -171,12 +168,10 @@ parseAndEvalToStringEqNum str ==
 
 parseAndInterpToString str ==
   v := applyWithOutputToString('parseAndEvalStr, [str])
-  breakIntoLines CDR v
+  breakIntoLines rest v
 
 parseAndEvalStr string ==
   $InteractiveMode :fluid := true
-  $BOOT: fluid := NIL
-  $SPAD: fluid := true
   $e:fluid := $InteractiveFrame
   parseAndEvalStr1 string
 

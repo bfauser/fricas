@@ -41,11 +41,11 @@
 
 -- When $QuiteCommand is true Spad will not produce any output from
 --  a top level command
-SETANDFILEQ($QuietCommand, NIL)
+DEFPARAMETER($QuietCommand, NIL)
 -- When $ProcessInteractiveValue is true, we don't want the value printed
 -- or recorded.
-SETANDFILEQ($ProcessInteractiveValue, NIL)
-SETANDFILEQ($HTCompanionWindowID, NIL)
+DEFPARAMETER($ProcessInteractiveValue, NIL)
+DEFPARAMETER($HTCompanionWindowID, NIL)
 
 intSetQuiet() ==
   $QuietCommand := true
@@ -88,7 +88,6 @@ interpsysInitialization() ==
 interpsys_restart() ==
   $IOindex := 1
   $InteractiveFrame := makeInitialModemapFrame()
-  $printLoadMsgs := 'off
   loadExposureGroupData()
   statisticsInitialization()
   initHist()
@@ -308,7 +307,7 @@ interpretTopLevel(x, posnForm) ==
   c
 
 interpret(x, :restargs) ==
-  posnForm := if PAIRP restargs then CAR restargs else restargs
+  posnForm := if PAIRP restargs then first restargs else restargs
   --type analyzes and evaluates expression x, returns object
   $env:local := [[NIL]]
   $genValue:local := true       --evaluate all generated code

@@ -40,11 +40,13 @@ conPage(a,:b) ==
   form :=
     atom a => [a,:b]
     a
-  $conArgstrings: local := [form2HtString x for x in KDR a]
+  $conArgstrings : local := [form2HtString x for x in IFCDR a]
   if not atom a then a := first a
   da := DOWNCASE a
-  pageName := LASSQ(da,'((type . CategoryType)(union . DomainUnion)(record . DomainRecord)(mapping . DomainMapping)(enumeration . DomainEnumeration))) =>
-    downlink pageName                --special jump out for primitive domains
+  pageName := QLASSQ(da, '((type . CategoryType) (union . DomainUnion) _
+                           (record . DomainRecord) (mapping . DomainMapping) _
+                           (enumeration . DomainEnumeration))) =>
+      downlink pageName       --special jump out for primitive domains
   line := conPageFastPath da  => kPage(line,form) --lower case name of cons?
   line := conPageFastPath UPCASE a => kPage(line,form) --upper case an abbr?
   ySearch a       --slow search (include default packages)
@@ -171,9 +173,9 @@ domainDescendantsOf(conform,domform) == main where --called by kargPage
       keepList := nil
       for [item,:pred] in domainsOf(x,IFCAR domlist) repeat
         u := assoc(item,alist) =>
-          keepList := [[item,:quickAnd(CDR u,pred)],:keepList]
+            keepList := [[item, :quickAnd(rest u, pred)], :keepList]
       alist := keepList
-    for pair in alist repeat RPLACD(pair,simpHasPred CDR pair)
+    for pair in alist repeat RPLACD(pair, simpHasPred rest pair)
     listSort(function GLESSEQP, alist)
   catScreen(r,alist) ==
     for x in r repeat
@@ -212,9 +214,15 @@ kePage(htPage,junk) ==
                        getConstructorExports((domname or conform),true))
   [conlist,attrlist,:oplist] := data
   if domname then
+<<<<<<< HEAD
     for x in conlist repeat  RPLAC(CDR x,simpHasPred CDR x)
     for x in attrlist repeat RPLAC(CDDR x,simpHasPred CDDR x)
     for x in oplist   repeat RPLAC(CDDR x,simpHasPred CDDR x)
+=======
+    for x in conlist repeat  rplac(rest x, simpHasPred rest x)
+    for x in attrlist repeat rplac(CDDR x, simpHasPred CDDR x)
+    for x in oplist   repeat rplac(CDDR x, simpHasPred CDDR x)
+>>>>>>> upstream/master
   prefix := pluralSay(#conlist + #attrlist + #oplist,'"Export",'"Exports")
   page := htInitPage([:prefix,'" of ",:heading],htCopyProplist htPage)
   htSayStandard '"\beginmenu "
@@ -295,7 +303,7 @@ dbSearchOrder(conform,domname,$domain) ==  --domain = nil or set to live domain
   $predvec:=
     $domain => $domain . 3
     GETDATABASE(name,'PREDICATES)
-  catpredvec := CAR u
+  catpredvec := first u
   catinfo    := CADR u
   catvec     := CADDR u
   catforms := [[pakform,:pred] for i in 0..MAXINDEX catvec | test ] where
@@ -416,7 +424,7 @@ kcpPage(htPage,junk) ==
 
 reduceAlistForDomain(alist,domform,conform) == --called from kccPage
   alist := SUBLISLIS(rest domform,rest conform,alist)
-  for pair in alist repeat RPLACD(pair,simpHasPred(CDR pair,domform))
+  for pair in alist repeat RPLACD(pair, simpHasPred(rest pair, domform))
   [pair for (pair := [.,:pred]) in alist | pred]
 
 kcaPage(htPage,junk) ==
@@ -473,11 +481,11 @@ kccPage(htPage,junk) ==
 
 augmentHasArgs(alist,conform) ==
   conname := opOf conform
-  args    := KDR conform or return alist
+  args    := IFCDR conform or return alist
   n       := #args
   [[name,:pred] for [name,:p] in alist] where pred ==
      extractHasArgs p is [a,:b] => p
-     quickAnd(p,['hasArgs,:TAKE(n,KDR getConstructorForm opOf name)])
+     quickAnd(p, ['hasArgs, :TAKE(n, IFCDR getConstructorForm opOf name)])
 
 kcdePage(htPage,junk) ==
   [kind,name,nargs,xflag,sig,args,abbrev,comments] := htpProperty(htPage,'parts)
@@ -553,7 +561,7 @@ kDomainName(htPage,kind,name,nargs) ==
   argString :=
     null args => '"()"
     argTailPart :=
-      "STRCONC"/["STRCONC"/ ['",",:x] for x in KDR args]
+      "STRCONC"/["STRCONC"/ ['",", :x] for x in IFCDR args]
     "STRCONC"/['"(",:first args,argTailPart,'")"]
   typeForm := CATCH('SPAD_READER, unabbrev mkConform(kind, name, argString)) or
     ['error,'invalidType,STRCONC(name,argString)]
@@ -564,7 +572,7 @@ kDomainName(htPage,kind,name,nargs) ==
 kArgumentCheck(domain?,s) ==
   s = '"" => nil
   domain? and (form := conSpecialString? s) =>
-    null KDR form => [STRINGIMAGE opOf form]
+    null IFCDR form => [STRINGIMAGE opOf form]
     form2String form
   [s]
 
@@ -591,7 +599,7 @@ kisValidType typeForm ==
 
 kCheckArgumentNumbers t ==
   [conname,:args] := t
-  cosig := KDR GETDATABASE(conname,'COSIG)
+  cosig := IFCDR GETDATABASE(conname, 'COSIG)
   #cosig ~= #args => false
   and/[foo for domain? in cosig for x in args] where foo ==
     domain? => kCheckArgumentNumbers x
@@ -637,7 +645,7 @@ dbCompositeWithMap htPage ==
   dbExtractUnderlyingDomain htpProperty(htPage,'domname) => '"DOWN"
   false
 
-dbExtractUnderlyingDomain domain == or/[x for x in KDR domain | isValidType x]
+dbExtractUnderlyingDomain domain == or/[x for x in IFCDR domain | isValidType x]
 
 --conform is atomic if no parameters, otherwise must be valid domain form
 conOpPage1(conform,:options) ==
@@ -790,15 +798,15 @@ dbGetDocTable(op,$sig,docTable,$which,aux) == main where
       [origin,:doc]
     or/[gn x for x in HGET(docTable,op)]
   gn u ==  --u is [origin,entry1,...,:code]
-    $conform := CAR u              --origin
+    $conform := first u              --origin
     if ATOM $conform then $conform := [$conform]
     code     := LASTATOM u         --optional topic code
-    comments := or/[p for entry in CDR u | p := hn entry] or return nil
+    comments := or/[p for entry in rest u | p := hn entry] or return nil
     [$conform,first comments,:code]
   hn [sig,:doc] ==
     $which = '"attribute" => sig is ['attribute,: =$sig] and doc
     pred := #$sig = #sig and
-      alteredSig := SUBLISLIS(KDR $conform,$FormalMapVariableList,sig)
+      alteredSig := SUBLISLIS(IFCDR $conform, $FormalMapVariableList, sig)
       alteredSig = $sig
     pred =>
       doc =>
@@ -865,7 +873,7 @@ conPageChoose conname ==
 dbShowCons1(htPage,cAlist,key) ==
   conlist := REMDUP [item for x in cAlist | pred] where
     pred ==
-      item := CAR x
+      item := first x
       $exposedOnlyIfTrue => isExposedConstructor opOf item
       item
 --$searchFirstTime and (conlist is [.]) => conPage first conlist
@@ -898,7 +906,7 @@ dbShowCons1(htPage,cAlist,key) ==
       bcUnixTable(listSort(function GLESSEQP,REMDUP flist))
     key = 'documentation   => dbShowConsDoc(page,conlist)
     if $exposedOnlyIfTrue then
-      cAlist := [x for x in cAlist | isExposedConstructor opOf CAR x]
+      cAlist := [x for x in cAlist | isExposedConstructor opOf first x]
     key = 'conditions =>     dbShowConditions(page,cAlist,kind)
     key = 'parameters => bcConTable REMDUP ASSOCLEFT cAlist
     key = 'kinds => dbShowConsKinds cAlist
@@ -1113,6 +1121,8 @@ PUT('Record,'documentation,SUBST(MESSAGE,'MESSAGE,'(
    "\spad{coerce(r)} returns an representation of \spad{r} as an output form")
          ((_$ (List (Any)))
    "\spad{coerce(u)}, where \spad{u} is the list \spad{[x,y]} for \spad{x} of type \spad{A} and \spad{y} of type \spad{B}, returns the record \spad{[a:x,b:y]}"))
+ (construct ((_$ A B)
+   "\spad{construct(x, y)} returns the record \spad{[a:x,b:y]}"))
  (elt ((A $ "a")
    "\spad{r . a} returns the value stored in record \spad{r} under selector \spad{a}.")
       ((B $ "b")

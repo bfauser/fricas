@@ -47,46 +47,50 @@ CLOSEANGLE  := QENUM('">   ", 0)
 QUESTION    := QENUM('"?   ",0)
 
 scanKeyWords := [ _
-           ['"add",      "ADD" ],_
-           ['"and",      "AND" ],_
-           ['"break",   "BREAK" ],_
-           ['"by",        "BY" ],_
-           ['"case",     "CASE" ],_
+           ['"add",      "add"], _
+           ['"and",      "and"], _
+           ['"break",   "break"], _
+           ['"by",        "by"], _
+           ['"case",     "case"], _
+           ['"catch",  "catch"], _
            ['"default",  "DEFAULT" ],_
            ['"define",  "DEFN" ],_
            ['"do",        "DO"],_
-           ['"else",    "ELSE" ],_
-           ['"exit",    "EXIT" ],_
-           ['"exquo",   "EXQUO"], _
+           ['"else",    "else"], _
+           ['"exquo",   "exquo"], _
            ['"export","EXPORT" ],_
-           ['"for",      "FOR" ],_
+           ['"finally", "finally"], _
+           ['"for",      "for"], _
            ['"free",    "FREE" ],_
-           ['"from",    "FROM" ],_
-           ['"has",      "HAS" ],_
-           ['"if",       "IF" ],_
-           ['"import", "IMPORT" ],_
-           ['"in", "IN" ],_
+           ['"from",    "from"], _
+           ['"generate", "generate"], _
+           ['"goto",    "goto"], _
+           ['"has",      "has"], _
+           ['"if",       "if"], _
+           ['"import", "import"], _
+           ['"in", "in"], _
            ['"inline", "INLINE" ],_
-           ['"is", "IS" ],_
-           ['"isnt", "ISNT" ],_
+           ['"is", "is"], _
+           ['"isnt", "isnt"], _
            ['"iterate", "ITERATE"],_
-           ['"leave",  "LEAVE"],_
-           ['"local", "local" ],_
+           ['"local", "local"], _
            ['"macro", "MACRO" ],_
            ['"mod", "MOD" ],_
-           ['"or", "OR" ],_
-           ['"pretend","PRETEND" ],_
-           ['"quo","QUO" ],_
-           ['"rem","REM" ],_
-           ['"repeat","REPEAT" ],_
-           ['"return","RETURN" ],_
+           ['"not", "not"], _
+           ['"or", "or"], _
+           ['"pretend", "pretend"], _
+           ['"quo", "quo"], _
+           ['"rem", "rem"], _
+           ['"repeat", "repeat"],_
+           ['"return", "return"],_
            ['"rule","RULE" ],_
-           ['"then","THEN" ],_
-           ['"until", "UNTIL" ],_
-           ['"where","WHERE" ],_
-           ['"while","WHILE" ],_
-           ['"with","WITH" ],_
-           ['"yield", "YIELD" ],_
+           ['"then", "then"],_
+           ['"try", "try"], _
+           ['"until", "until"], _
+           ['"where", "where"], _
+           ['"while", "while"],_
+           ['"with", "with"], _
+           ['"yield", "yield"], _
            ['"|","BAR"],_
            ['".","DOT" ],_
            ['"::","COERCE" ],_
@@ -110,6 +114,7 @@ scanKeyWords := [ _
            ['"^","CARAT" ],_
            ['"..","SEG" ],_
            ['"#","#" ],_
+           ['"#1", "#1" ],_
            ['"&","AMPERSAND" ],_
            ['"$","$" ],_
            ['"/","SLASH" ],_
@@ -150,7 +155,7 @@ scanKeyWords := [ _
 scanKeyTableCons()==
    KeyTable:=MAKE_-HASHTABLE("CVEC")
    for st in scanKeyWords repeat
-      HPUT(KeyTable,CAR st,CADR st)
+      HPUT(KeyTable, first st, CADR st)
    KeyTable
 
 scanInsert(s,d) ==
@@ -181,12 +186,11 @@ scanDictCons()==
 
 scanPunCons()==
     listing := HKEYS scanKeyTable
-    a := BVEC_-MAKE_-FULL(256, 0)
---  SETSIZE(a,256)
-    for i in 0..255 repeat BVEC_-SETELT(a,i,0)
+    a := make_BVEC(256, 0)
+    for i in 0..255 repeat SETELT_BVEC(a, i, 0)
     for k in listing repeat
        if not startsId? k.0
-       then BVEC_-SETELT(a,QENUM(k,0),1)
+       then SETELT_BVEC(a, QENUM(k, 0), 1)
     a
 
 scanKeyTable:=scanKeyTableCons()
@@ -198,12 +202,12 @@ scanPun:=scanPunCons()
 for i in   [ _
    ["EQUAL"    ,"="], _
    ["TIMES"    ,"*"], _
-   ["HAS"      ,"has"], _
-   ["CASE"     ,"case"], _
-   ["EXQUO",    "exquo"], _
-   ["REM"      ,"rem"], _
+   ["has",      "has"], _
+   ["case",     "case"], _
+   ["exquo",    "exquo"], _
+   ["rem",      "rem"], _
    ["MOD"      ,"mod"], _
-   ["QUO"      ,"quo"], _
+   ["quo",      "quo"], _
    ["SLASH"    ,"/"], _
    ["BACKSLASH","\"], _
    ["SLASHSLASH"    ,"//"], _
@@ -221,12 +225,12 @@ for i in   [ _
    ["LE"       ,"<="], _
    ["GE"       ,">="], _
    ["NOTEQUAL" ,"~="], _
-   ["BY"       ,"by"], _
+   ["by",       "by"], _
    ["ARROW"       ,"->"], _
    ["LARROW"       ,"<-"], _
    ["BAR"       ,"|"], _
    ["SEG"       ,".."] _
-    ] repeat MAKEPROP(CAR i,'INFGENERIC,CADR i)
+    ] repeat MAKEPROP(first i, 'INFGENERIC, CADR i)
 
 -- Scanner
 
@@ -237,6 +241,21 @@ DEFVAR($ln)
 DEFVAR($n)
 DEFVAR($r)
 DEFVAR($sz)
+DEFPARAMETER($was_nonblank, false)
+
+DEFVAR($comment_indent, 0)
+DEFVAR($current_comment_block, nil)
+DEFVAR($last_nonempty_linepos, nil)
+DEFVAR($spad_scanner, false)
+
+finish_comment() ==
+    NULL($current_comment_block) => nil
+    pos :=
+        $comment_indent = 0 =>
+            first(rest(rest($linepos))) - 1
+        first(rest(rest($last_nonempty_linepos)))
+    PUSH([pos, :NREVERSE($current_comment_block)], $COMBLOCKLIST)
+    $current_comment_block := nil
 
 --  lineoftoks  bites off a token-dq from a line-stream
 --  returning the token-dq and the rest of the line-stream
@@ -256,9 +275,9 @@ nextline(s)==
      if npNull s
      then false
      else
-       $f:= CAR s
-       $r:= CDR s
-       $ln := CDR $f
+       $f:= first s
+       $r:= rest s
+       $ln := rest $f
        $linepos:=CAAR $f
        $n:=STRPOSL('" ",$ln,0,true)-- spaces at beginning
        $sz :=# $ln
@@ -273,6 +292,7 @@ lineoftoks(s)==
    $n:local:=nil
    $sz:local := nil
    $floatok:local:=true
+   $was_nonblank := false
    not nextline s => CONS(nil,nil)
    if null scanIgnoreLine($ln,$n) -- line of spaces or starts ) or >
    then cons(nil,$r)
@@ -280,14 +300,19 @@ lineoftoks(s)==
       toks:=[]
       a:= incPrefix?('"command",1,$ln)
       a =>
-                 $ln:=SUBSTRING($ln,8,nil)
-                 b:= dqUnit constoken($ln,$linepos,["command",$ln],0)
-                 cons([[b,s]],$r)
+           $ln := SUBSTRING($ln, 8, nil)
+           b := dqUnit constoken($ln, $linepos, ["command", $ln], 0)
+           cons([[b, s]], $r)
 
-      while $n<$sz repeat toks:=dqAppend(toks,scanToken())
+      while $n<$sz repeat
+          tok := scanToken()
+          if tok and $spad_scanner then finish_comment()
+          toks:=dqAppend(toks, tok)
       if null toks
       then cons([],$r)
-      else cons([[toks,s]],$r)
+      else
+          $last_nonempty_linepos := $linepos
+          cons([[toks,s]],$r)
 
 
 scanToken () ==
@@ -310,43 +335,43 @@ scanToken () ==
             startsId? ch              => scanWord  (false)
             c=SPACE                   =>
                            scanSpace ()
+                           $was_nonblank := false
                            []
             c = STRING_CHAR           => scanString ()
             digit? ch                 => scanNumber ()
             c=ESCAPE                  => scanEscape()
             scanError ()
       null b => nil
-      dqUnit constoken(ln,linepos,b,n+lnExtraBlanks linepos)
+      nb := $was_nonblank and b.0 = "key" and b.1 = "("
+      $was_nonblank := true
+      dqUnit constoken1(ln, linepos, b, n + lnExtraBlanks linepos, nb)
 
 -- to pair badge and badgee
 
--- lfid x== ["id",INTERN x]
-lfid x== ["id",INTERN(x, '"BOOT")]
+DEFPARAMETER($boot_package, FIND_-PACKAGE('"BOOT"))
+lfid x== ["id", INTERN(x, $boot_package)]
 
 lfkey x==["key",keyword x]
 
-lfinteger x==
-           ["integer",x]
---     if EQUAL(x,'"0")
---     then ["id",INTERN x]
---     else if EQUAL(x,'"1")
---          then ["id",INTERN x]
---          else ["integer",x]
+lfinteger x == ["integer", x]
 
 lfrinteger (r,x)==["integer",CONCAT (r,CONCAT('"r",x))]
 --lfrfloat(a,w,v)==["rfloat",CONCAT(a,'"r.",v)]
 lffloat(a, w, e) == ["float", [a, w, e]]
 lfstring x==if #x=1 then ["char",x] else ["string",x]
-lfcomment x== ["comment", x]
+lfcomment (n, lp, x) == ["comment", x]
 lfnegcomment x== ["negcomment", x]
 lferror x==["error",x]
 lfspaces x==["spaces",x]
 
-constoken(ln,lp,b,n)==
+constoken1(ln, lp, b, n, nb) ==
 --  [b.0,b.1,cons(lp,n)]
        a:=cons(b.0,b.1)
+       if nb then ncPutQ(a, "nonblank", true)
        ncPutQ(a,"posn",cons(lp,n))
        a
+
+constoken(ln, lp, b, n) == constoken1(ln, lp, b, n, false)
 
 scanEscape()==
          $n:=$n+1
@@ -395,7 +420,13 @@ scanNegComment()==
 scanComment()==
       n:=$n
       $n:=$sz
-      lfcomment SUBSTRING($ln,n,nil)
+      c_str := SUBSTRING($ln,n,nil)
+      if $spad_scanner then
+          if not(n = $comment_indent) then
+              finish_comment()
+          $comment_indent := n
+          PUSH(CONCAT(make_full_CVEC(n, '" "), c_str), $current_comment_block)
+      lfcomment(n, $linepos, c_str)
 
 
 scanPunct()==
@@ -435,6 +466,11 @@ scanSpace()==
            $floatok:=true
            lfspaces ($n-n)
 
+e_concat(s1, s2) ==
+    #s2 = 0 => s1
+    idChar?(s2.0) => CONCAT(s1, "__", s2)
+    CONCAT(s1, s2)
+
 scanString()==
             $n:=$n+1
             $floatok:=false
@@ -465,14 +501,10 @@ scanS()==
                   str:=SUBSTRING($ln,n,mn-n)-- before escape
                   $n:=mn+1
                   a:=scanEsc() -- case of end of line when false
-                  b:=if a
-                     then
-                       str:=CONCAT(str,scanTransform($ln.$n))
-                       $n:=$n+1
-                       scanS()
-                      else scanS()
-                  CONCAT(str,b)
-scanTransform x==x
+                  not(a) => CONCAT(str, scanS())
+                  ec := $ln.$n
+                  $n := $n + 1
+                  e_concat(str, CONCAT(ec, scanS()))
 
 --idChar? x== scanLetter x or DIGITP x or MEMQ(x,'(_? _%))
 
@@ -514,7 +546,7 @@ scanW(b)==             -- starts pointing to first char
                     if idChar?($ln.$n)
                     then scanW(b)
                     else [b,'""]
-           [bb.0 or b,CONCAT(str,bb.1)]
+           [bb.0 or b, e_concat(str, bb.1)]
 
 scanWord(esp) ==
           aaa:=scanW(false)
@@ -522,7 +554,7 @@ scanWord(esp) ==
           $floatok:=false
           if esp or aaa.0
           then lfid w
-          else if keyword? w
+          else if (keyword? w and ($spad_scanner or w ~= '"not"))
                then
                   $floatok:=true
                   lfkey w
@@ -674,4 +706,4 @@ substringMatch (l,d,i)==
                  else false
        s1
 
-punctuation? c== c < 256 and scanPun.c=1
+punctuation? c == c < 256 and ELT_BVEC(scanPun, c) = 1

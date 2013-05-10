@@ -264,7 +264,7 @@ compHash(op,argl,body,cacheNameOrNil,eqEtc,countFl) ==
   op
 
 CDRwithIncrement x ==
-  RPLACA(x, inc_SI CAR x)
+  RPLACA(x, inc_SI first x)
   CDR x
 
 clearClams() ==
@@ -371,7 +371,7 @@ clearHashReferenceCounts() ==
 
 remHashEntriesWith0Count $hashTable ==
   MAPHASH(FUNCTION fn,$hashTable) where fn(key,obj) ==
-    CAR obj = 0 => HREM($hashTable,key)  --free store
+    first obj = 0 => HREM($hashTable, key)  --free store
     nil
 
 initCache n ==
@@ -385,9 +385,10 @@ assocCache(x,cacheName,fn) ==
   forwardPointer:= al
   val:= nil
   until EQ(forwardPointer,al) repeat
-    FUNCALL(fn,CAAR forwardPointer,x) => return (val:= CAR forwardPointer)
+    FUNCALL(fn, CAAR forwardPointer, x) =>
+        return (val := first forwardPointer)
     backPointer:= forwardPointer
-    forwardPointer:= CDR forwardPointer
+    forwardPointer := rest forwardPointer
   val => val
   SET(cacheName,backPointer)
   nil
@@ -398,13 +399,13 @@ assocCacheShift(x,cacheName,fn) ==  --like ASSOC except that al is circular
   forwardPointer:= al
   val:= nil
   until EQ(forwardPointer,al) repeat
-    FUNCALL(fn, CAR (y:=CAR forwardPointer),x) =>
+    FUNCALL(fn, first(y := first forwardPointer), x) =>
       if not EQ(forwardPointer,al) then   --shift referenced entry to front
-        RPLACA(forwardPointer,CAR al)
+        RPLACA(forwardPointer, first al)
         RPLACA(al,y)
       return (val:= y)
-    backPointer := forwardPointer      --CAR is slot replaced on failure
-    forwardPointer:= CDR forwardPointer
+    backPointer := forwardPointer      -- first is slot replaced on failure
+    forwardPointer := rest forwardPointer
   val => val
   SET(cacheName,backPointer)
   nil
@@ -418,17 +419,17 @@ assocCacheShiftCount(x,al,fn) ==
   val:= nil
   minCount:= 10000 --preset minCount but not newFrontPointer here
   until EQ(forwardPointer,al) repeat
-    FUNCALL(fn, CAR (y:=CAR forwardPointer),x) =>
+    FUNCALL(fn, first(y := first forwardPointer), x) =>
       newFrontPointer := forwardPointer
       RPLAC(CADR y, inc_SI CADR y)         --increment use count
       return (val:= y)
     if less_SI(c := CADR y, minCount) then --initial c is 1 so is true 1st time
       minCount := c
-      newFrontPointer := forwardPointer   --CAR is slot replaced on failure
-    forwardPointer:= CDR forwardPointer
+      newFrontPointer := forwardPointer   -- first is slot replaced on failure
+    forwardPointer:= rest forwardPointer
   if not EQ(newFrontPointer,al) then       --shift referenced entry to front
-    temp:= CAR newFrontPointer             --or entry with smallest count
-    RPLACA(newFrontPointer,CAR al)
+    temp := first newFrontPointer             --or entry with smallest count
+    RPLACA(newFrontPointer, first al)
     RPLACA(al,temp)
   val
 
@@ -454,7 +455,7 @@ clamStats() ==
 
 numberOfEmptySlots cache==
   count:= (CAAR cache ='$failed => 1; 0)
-  for x in tails rest cache while NEQ(x,cache) repeat
+  for x in tails rest cache while not(EQ(x, cache)) repeat
     if CAAR x='$failed then count:= count+1
   count
 
@@ -477,7 +478,7 @@ haddProp(ht,op,prop,val) ==
     stopTimingProcess 'debug
   u:= HGET(ht,op) =>     --hope that one exists most of the time
     assoc(prop,u) => val     --value is already there--must = val; exit now
-    RPLACD(u,[CAR u,:CDR u])
+    RPLACD(u, [first u, :rest u])
     RPLACA(u,[prop,:val])
     $op: local := op
     listTruncate(u,20)        --save at most 20 instantiations
@@ -506,9 +507,16 @@ recordInstantiation1(op,prop,dropIfTrue) ==
   null $reportInstantiations => nil
   u:= HGET($instantRecord,op) =>     --hope that one exists most of the time
     v := LASSOC(prop,u) =>
+<<<<<<< HEAD
       dropIfTrue => RPLAC(CDR v,1+CDR v)
       RPLAC(CAR v,1+CAR v)
     RPLACD(u,[CAR u,:CDR u])
+=======
+      dropIfTrue => (rplac(CDR v, 1 + CDR v); v)
+      rplac(first v, 1 + first v)
+      v
+    RPLACD(u, [first u, :rest u])
+>>>>>>> upstream/master
     val :=
       dropIfTrue => [0,:1]
       [1,:0]
@@ -542,7 +550,7 @@ reportInstantiations() ==
 listTruncate(l,n) ==
   u:= l
   n := dec_SI n
-  while NEQ(n,0) and null atom u repeat
+  while n ~= 0 and null atom u repeat
       n := dec_SI n
       u := QCDR u
   if null atom u then
@@ -554,11 +562,11 @@ listTruncate(l,n) ==
 lassocShift(x,l) ==
   y:= l
   while not atom y repeat
-    EQUAL(x,CAR QCAR y) => return (result := QCAR y)
+    EQUAL(x, first QCAR y) => return (result := QCAR y)
     y:= QCDR y
   result =>
-    if NEQ(y,l) then
-      QRPLACA(y,CAR l)
+    if not(EQ(y, l)) then
+      QRPLACA(y, first l)
       QRPLACA(l,result)
     QCDR result
   nil
@@ -566,11 +574,11 @@ lassocShift(x,l) ==
 lassocShiftWithFunction(x,l,fn) ==
   y:= l
   while not atom y repeat
-    FUNCALL(fn,x,CAR QCAR y) => return (result := QCAR y)
+    FUNCALL(fn, x, first QCAR y) => return (result := QCAR y)
     y:= QCDR y
   result =>
-    if NEQ(y,l) then
-      QRPLACA(y,CAR l)
+    if not(EQ(y, l)) then
+      QRPLACA(y, first l)
       QRPLACA(l,result)
     QCDR result
   nil
@@ -601,8 +609,8 @@ rightJustifyString(x,maxWidth) ==
 domainEqualList(argl1,argl2) ==
   --function used to match argument lists of constructors
   while argl1 and argl2 repeat
-    item1:= devaluate CAR argl1
-    item2:= CAR argl2
+    item1 := devaluate first argl1
+    item2 := first argl2
     partsMatch:=
       item1 = item2 => true
       false

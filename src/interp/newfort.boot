@@ -101,7 +101,7 @@ exp2Fort2(e,prec,oldOp) ==
   unaryOps    := ['"-",'"~"]
   unaryPrecs  := [700,50]
   binaryOps   := ['"|",'"**",'"/",'".LT.",'".GT.",'".EQ.",'".LE.",'".GE.", _
-                  '"OVER",'".AND.",'".OR."]
+                  '".AND.", '".OR."]
   binaryPrecs := [0, 900, 800, 400, 400, 400, 400, 400, 800, 70, 90]
   naryOps     := ['"-",'"+",'"*",'",",'" ",'"ROW",'""]
   naryPrecs   := [700,  700, 800,  110,   0,     0,  0]
@@ -193,8 +193,8 @@ beenHere(e,n) ==
 -- using COPY-TREE : RPLAC does not smash $fortCsList
 -- which led to inconsistencies in assignment of temp. vars.
       $fortCsList := COPY_-TREE [['"=",var,e],:$fortCsList]
-      loc := CAR exprStk
-      fun := CAR n.3
+      loc := first exprStk
+      fun := first(n.3)
       fun = 'CAR =>
         RPLACA(loc,var)
       fun = 'CDR =>
@@ -430,7 +430,7 @@ exp2FortSpecial(op,args,nargs) ==
     STRCONC('"[",first arg,tailPart,'"]")
   op = "PAREN" =>
     args := first args
-    not(first(args)="CONCATB") => fortError1 [op,:args]
+    not(first(args)="CONCATB") => fortPre1(args)
     -- Have a matrix element
     mkMat(args)
   op = "SUB" =>
@@ -692,7 +692,7 @@ fortFormatTypes1(typeName,names) ==
 insertEntry(size,el,aList) ==
   entry := assoc(size,aList)
   null entry => CONS(CONS(size,LIST el),aList)
-  RPLACD(entry,CONS(el,CDR entry))
+  RPLACD(entry, CONS(el, rest entry))
   aList
 
 fortFormatCharacterTypes(names) ==
@@ -700,7 +700,7 @@ fortFormatCharacterTypes(names) ==
   genuineArrays  := []
   for u in names repeat
     ATOM u => sortedByLength := insertEntry(0,u,sortedByLength)
-    #u=2 => sortedByLength := insertEntry(CADR u,CAR u,sortedByLength)
+    #u=2 => sortedByLength := insertEntry(CADR u, first u, sortedByLength)
     genuineArrays := [u,:genuineArrays]
   for u in sortedByLength repeat
     fortFormatTypes1(mkCharName car u, [STRINGIMAGE(s) for s in cdr(u)]) where
@@ -786,7 +786,7 @@ fortPre1 e ==
   ELT(STRINGIMAGE e, 0) = char "%" => SUBSEQ(STRINGIMAGE e, 1)
   atom e => e
   [op, :args] := e
-  op in ["**" , '"**"] =>
+  op in ["^" , '"^"] =>
     [rand,exponent] := args
     rand = "%e" => fortPre1 ["exp", exponent]
     (IDENTP rand or STRINGP rand) and exponent=2 => ["*", rand, rand]
@@ -795,7 +795,7 @@ fortPre1 e ==
   op = "ROOT" =>
     #args = 1 => fortPreRoot ["sqrt", first args]
     [ "**" , fortPreRoot first args , [ "/" , fortPreRoot(1), fortPreRoot first rest args] ]
-  if op in ['"OVER", "OVER"] then op := '"/"
+  if op in ['"OVER", "OVER", '"SLASH", "SLASH"] then op := '"/"
   specialOps  := '(BRACKET BRACE SUB AGGLST SUPERSUB MATRIX SEGMENT ALTSUPERSUB
                    PAREN CONCAT CONCATB QUOTE STRING SIGMA  STEP IN SIGMA2
                    INTSIGN  PI PI2 INDEFINTEGRAL)

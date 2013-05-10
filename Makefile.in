@@ -55,10 +55,9 @@ all-noweb: stamp-noweb
 
 stamp-noweb:
 	@echo Making in noweb
-	( mkdir noweb && \
-	  cd noweb && \
-	  $(TAR) -zxf "@noweb_tarball@" && \
-	  cd src && \
+	[ -d noweb ] || \
+	  ( mkdir noweb && $(TAR) -zx -C noweb -f "@noweb_tarball@" )
+	( cd noweb/src &&
 	  cat Makefile \
 	      | sed -e "s|^BIN=.*|BIN=$(fricas_build_bindir)|" \
                     -e "s|^LIB=.*|LIB=$(fricas_build_libdir)|" \
@@ -69,6 +68,7 @@ stamp-noweb:
 		    -e "s,c/markup,c/markup$(EXEEXT)," \
 		    -e "s,c/mnt,c/mnt$(EXEEXT)," \
 		    -e "s,c/finduses,c/finduses$(EXEEXT)," \
+		    -e "s,^CFLAGS=.*,CFLAGS=-U_POSIX_C_SOURCE -D_POSIX_C_SOURCE=1," \
 	      > Makefile.tmp && mv Makefile.tmp Makefile && \
 	  ./awkname $(AWK) && $(MAKE) -j 1 all install )
 	$(STAMP) stamp-noweb
@@ -142,9 +142,9 @@ install-src:
 	     || exit 1 ; \
 	done
 	echo '#!/bin/sh -' > '${COMMAND}'.tmp
-	echo AXIOM="'$(libdir)/fricas/target/$(target)'" >> '${COMMAND}'.tmp
+	echo AXIOM='"$${FRICAS_PREFIX:-$(exec_prefix)}/lib/fricas/target/$(target)"' >> '${COMMAND}'.tmp
 	echo export AXIOM >> '${COMMAND}'.tmp
-	echo PATH='$${AXIOM}/bin':'$${PATH}' >> '${COMMAND}'.tmp
+	echo PATH='$${AXIOM}/bin':'$${PATH}':'/usr/X11/bin' >> '${COMMAND}'.tmp
 	echo export PATH >> '${COMMAND}'.tmp
 	cat $(fricas_src_srcdir)/etc/fricas >> '${COMMAND}'.tmp
 	$(INSTALL_SCRIPT) '${COMMAND}'.tmp '${COMMAND}'

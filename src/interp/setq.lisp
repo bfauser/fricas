@@ -74,10 +74,8 @@
 
 ;; These were originally in SPAD LISP
 
-(SETQ $BOOT NIL)
 (setq |$interpOnly| nil)
 (SETQ |$testingSystem| NIL)
-(SETQ |$newCompCompare| NIL)
 (SETQ |$permitWhere| NIL)
 (DEFPARAMETER |$bootStrapMode| NIL) ;; if true skip functor bodies
 (SETQ |$bootstrapDomains| NIL)
@@ -235,7 +233,6 @@
 
 ;; These were originally in INIT LISP
 
-(SETQ $LISPLIB NIL)
 (SETQ |$forceDatabaseUpdate| NIL)  ;; see "load" function
 (DEFPARAMETER |$functorForm| NIL)
 
@@ -329,8 +326,6 @@
          ;" controls generation of QREFELT etc."
 (SETQ |$QuickLet| T)
          ;" controls generation of LET tracing."
-(SETQ |$mathTraceList| NIL)
-         ;" controls mathprint output for )trace."
 (SETQ |$domainTraceNameAssoc| NIL)
         ;"alist of traced domains"
 (SETQ |$tracedMapSignatures| ())
@@ -449,7 +444,11 @@
 (SETQ |$optimizableConstructorNames|
    '(|List| |Integer| |PositiveInteger| |NonNegativeInteger| |SingleInteger|
      |String| |Boolean| |Symbol| |DoubleFloat| |PrimitiveArray| |Vector|
-     |Matrix| |OneDimensionalArray| |TwoDimensionalArray| |U32Vector|))
+     |Matrix| |OneDimensionalArray| |TwoDimensionalArray| |U32Vector|
+     |U32Matrix| |U16Vector| |U16Matrix| |U8Vector| |U8Matrix|
+     |DoubleFloatVector| |DoubleFloatMatrix| |ComplexDoubleFloatVector|
+     |ComplexDoubleFloatMatrix| |Character| |SortedExponentVector|
+     |HashState| ))
             ;" used by optCallSpecially"
 (SETQ |$Zero| '(|Zero|))
 (SETQ |$One| '(|One|))
@@ -491,11 +490,6 @@
 
 ;; ---- end of initial settings for variables used in test.boot
 
-;; Next flag determines whether to use BF as default floating point
-;; type. (actually, now means NewFloat)
-
-; "Determines whether to use BF as default floating point type."
-(SETQ |$useBFasDefault| 'T)
 
 ;; By default, don't generate info files with old compiler.
 (setq |$profileCompiler| nil)

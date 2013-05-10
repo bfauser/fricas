@@ -35,7 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _GDRAWS0_H_ 1
 
 #include <X11/Xlib.h>
-#include "axiom-c-macros.h"
+#include "fricas_c_macros.h"
 
 
 #define yes		1
@@ -94,7 +94,8 @@ psStruct psData[psDrawNo];	/* need psDrawNo of them */
 
 extern	int		scrn;	       /* screen */
 extern	Display		*dsply;	       /* display */
-extern	char		*envAXIOM;     /* environment variable AXIOM or DEVE */
+/* environment variable AXIOM or DEVE */
+extern	char		* env_fricas;
 
 
 #endif

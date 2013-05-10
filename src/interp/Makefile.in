@@ -3,23 +3,21 @@ subdir = src/interp/
 
 DOC=$(fricas_target_docdir)/src/interp
 
+fricas_debug_compiler=@fricas_debug_compiler@
+
 # Command to translate Boot to Common Lisp
-BOOT_TO_LISP = \
-	$(fricas_build_helper) --translate_boot \
-		--use=$(BOOTSYS) --output=$@ $<
+BOOT_TO_LISP = $(fricas_build_helper) \
+	       --translate_boot --debug=$(fricas_debug_compiler) \
+	       --use=$(BOOTSYS) --output=$@ $<
 
 # Command to translate Common Lisp to native object code
-COMPILE_LISP = \
-	$(fricas_build_helper) --compile_lisp \
-		--output=$@ --use=$(DEPSYS) $<
+COMPILE_LISP = $(fricas_build_helper) \
+	       --compile_lisp --debug=$(fricas_debug_compiler) \
+	       --use=$(LOADSYS) --output=$@ $<
 
 AUTO=$(fricas_targetdir)/autoload
 
 BOOTSYS= $(fricas_build_bindir)/bootsys
-
-DEPSYS=	$(fricas_build_bindir)/depsys
-
-DEP=  vmlisp macros primitives
 
 LOADSYS= $(fricas_build_bindir)/lisp$(EXEEXT)
 SAVESYS= $(fricas_build_bindir)/interpsys$(EXEEXT)
@@ -28,7 +26,7 @@ AXIOMSYS= $(fricas_target_bindir)/AXIOMsys$(EXEEXT)
 OBJ_files= vmlisp macros setq astr \
 	alql buildom cattable cformat clam clammed \
 	compat compress cparse cstream database \
-	debug dq fname format g-boot g-cndata g-error g-opt \
+	debug dq format g-boot g-cndata g-error g-opt \
 	g-timer	g-util hypertex i-analy \
 	i-code i-coerce	i-coerfn i-eval i-funsel i-intern \
 	i-map i-output i-resolv	i-spec1 i-spec2 i-syscmd \
@@ -38,8 +36,8 @@ OBJ_files= vmlisp macros setq astr \
 	posit property ptrees record rulesets scan \
 	serror server setvars sfsfun simpbool slam \
 	spad spaderror template termrw trace \
-	daase fortcall ncomp primitives parsing \
-	bootlex parse postpar preparse s-parser
+	daase fortcall ncomp parsing \
+	parse postpar s-parser scwrap2
 
 OBJS= $(patsubst %, %.$(LISPOBJEXT), $(OBJ_files))
 
@@ -69,7 +67,6 @@ TIMESTAMP=$(fricas_targetdir)/timestamp
 YEARWEEK=(progn (setq timestamp "${TIMESTAMP}") (setq boot::*build-version* "${VERSION}") (yearweek))
 
 
-.PRECIOUS:	${DEPSYS}
 .PRECIOUS:	${SAVESYS}
 .PRECIOUS:	${AXIOMSYS}
 
@@ -78,7 +75,7 @@ PROCLAIMS=(progn (load "$(srcdir)/interp-proclaims.lisp"))
 .SUFFIXES:
 .SUFFIXES: .boot .clisp .lisp .pamphlet
 
-.PHONY: all all-ax all-depsys all-interpsys all-axiomsys
+.PHONY: all all-ax all-interpsys all-axiomsys
 
 all: all-ax
 
@@ -95,13 +92,11 @@ remove-stamp:
 .PHONY: build-images
 build-images: remove-stamp all-interpsys
 
-all-interpsys: all-depsys
+all-interpsys:
 	$(MAKE) $(SAVESYS)
 
-all-axiomsys: all-depsys
+all-axiomsys:
 	$(MAKE) $(AXIOMSYS)
-
-all-depsys: $(DEPSYS)
 
 clean:
 	@echo 619 cleaning $(builddir)
@@ -130,7 +125,7 @@ clean-local: mostlyclean-local
 distclean-local: clean-local
 
 ${SAVESYS} ${AXIOMSYS}: makeint.lisp \
-    ${DEPSYS} ${OBJS}  util.$(LISPOBJEXT) \
+    ${OBJS}  util.$(LISPOBJEXT) \
     ${OCOBJS} ${BROBJS} \
     database.date ${INOBJS} ${ASCOMP} ${ASAUTO} \
     ${NAGBROBJS} \
@@ -175,31 +170,6 @@ ${SAVESYS}:
 	ls $@
 	@ echo 6 ${SAVESYS} created
 
-${DEPSYS}:	$(patsubst %, $(srcdir)/%.lisp, ${DEP} util)
-	@ echo 3 making ${DEPSYS}
-	$(mkinstalldirs) $(fricas_build_bindir)
-	echo '${PROCLAIMS}' > makedep.lisp
-	echo '(load "$(srcdir)/util.lisp")' >> makedep.lisp
-	echo '(in-package "BOOT")' >> makedep.lisp
-	echo '(build-depsys (quote (' \
-	          '$(patsubst %, "$(srcdir)/%.lisp", ${DEP})' \
-		  ')) "${AXIOM}" "$(builddir)")' >> makedep.lisp
-	for A in ${DEP} util ; do \
-	    echo '(maybe-compile "$(srcdir)/'$$A'.lisp"' \
-	         '"'$$A'.$(LISPOBJEXT)")' >> makedep.lisp ; \
-	done
-	echo '(quit)' >> makedep.lisp
-	echo '(load "makedep.lisp")' | ${LOADSYS}
-	echo '(in-package "FRICAS-LISP")' > makedep2.lisp
-	echo '(make-program "$(BASE)$@" (quote (' >> makedep2.lisp
-	echo '#+:GCL"$(srcdir)/interp-proclaims.lisp"' >> makedep2.lisp
-	for A in util ${DEP} ; do \
-              echo '"'$$A'.$(LISPOBJEXT)"' >> makedep2.lisp ; \
-        done
-	echo ')))' >>  makedep2.lisp
-	cat makedep2.lisp | ${LOADSYS}
-	ls $@
-	@ echo 4 ${DEPSYS} created
 .PHONY: all-axiomsys
 
 all-axiomsys: ${AXIOMSYS}
@@ -221,22 +191,15 @@ exposed.lsp: $(fricas_src_algdir)/exposed.lsp.pamphlet
 	@ echo 615 making $@ from $<
 	$(axiom_build_document) --tangle --output=$@ $<
 
-$(fricas_targetdir)/algebra/exposed.$(FASLEXT) : exposed.lsp ${DEPSYS}
+$(fricas_targetdir)/algebra/exposed.$(FASLEXT) : exposed.lsp
 	@ echo 616 making $@ from exposed.lsp
 	echo '(progn  (compile-file "exposed.lsp" :output-file' \
 	      ' "$(BASE)$(fricas_targetdir)/algebra/exposed.$(FASLEXT)") (${BYE}))' \
-		| ${DEPSYS}
+		| ${LOADSYS}
 
 database.date:
 	@ echo 617 the database was updated...remaking interpsys
 	touch database.date
-
-AUTO_from_IN=\
- bootlex parse parsing postpar preparse s-parser
-
-$(addprefix $(AUTO)/, $(addsuffix .$(LISPOBJEXT), $(AUTO_from_IN))): \
-   $(AUTO)/%.$(LISPOBJEXT) : %.$(LISPOBJEXT)
-	cp $< $@
 
 IN_from_MID=\
  as buildom cattable compat compress \
@@ -263,9 +226,7 @@ AUTO_from_MID=\
 $(patsubst %, $(AUTO)/%.$(LISPOBJEXT), $(AUTO_from_MID) showimp): \
     $(AUTO)/%.$(LISPOBJEXT) : %.clisp
 	@ echo 10 making $@ from $<
-	echo '(in-package "FRICAS-LISP")' \
-	     '(progn (fricas-compile-file "$<" :output-file "$(BASE)$@")' \
-	     ' (${BYE}))' | ${DEPSYS}
+	$(COMPILE_LISP)
 
 clammed.clisp: $(srcdir)/clammed.boot
 	echo '(progn (boottran::bootclam "$<" "$@") (${BYE}))' | ${BOOTSYS}

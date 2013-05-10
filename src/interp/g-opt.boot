@@ -154,7 +154,7 @@ optCall (x is ["call",:u]) ==
   systemErrorHere '"optCall"
 
 optCallSpecially(q,x,n,R) ==
-    MEMQ(KAR R,$optimizableConstructorNames) => optSpecialCall(x,R,n)
+    MEMQ(IFCAR R, $optimizableConstructorNames) => optSpecialCall(x, R, n)
     (y:= get(R,"value",$e)) and
       MEMQ(opOf y.expr,$optimizableConstructorNames) =>
         optSpecialCall(x,y.expr,n)
@@ -167,7 +167,6 @@ optCallEval u ==
   u is ["Vector",:.] => Vector Integer()
   u is ["OneDimensionalArray", :.] => OneDimensionalArray Integer()
   u is ["PrimitiveArray",:.] => PrimitiveArray Integer()
-  -- u is ["FactoredForm",:.] => FactoredForm Integer()
   u is ["Matrix", :.] => Matrix Integer()
   u is ["TwoDimensionalArray", :.] => TwoDimensionalArray Integer()
   eval u
@@ -186,7 +185,7 @@ optCons (x is ["CONS",a,b]) ==
 optSpecialCall(x,y,n) ==
   yval := optCallEval y
   CAAAR x="CONST" =>
-    KAR yval.n = function Undef =>
+    IFCAR yval.n = function Undef =>
       keyedSystemError("S2GE0016",['"optSpecialCall",
         '"invalid constant"])
     MKQ yval.n
@@ -194,13 +193,6 @@ optSpecialCall(x,y,n) ==
     rplac(rest x,CDAR x)
     rplac(first x,fn)
     if fn is ["XLAM",:.] then x:=first optimize [x]
-    x is ["EQUAL",:args] =>
-                --DEF-EQUAL is really an optimiser
-                -- RPLACW(x,DEF_-EQUAL args)
-                z := DEF_-EQUAL args
-                RPLACA(x, CAR z)
-                RPLACD(x, CDR z)
-                x
     x
   [fn,:a]:= first x
   RPLAC(first x,"SPADCALL")

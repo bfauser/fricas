@@ -34,7 +34,7 @@
 )if false
 Description of Messages
 
-Axiom messages are read from a flat file database and returned
+FriCAS messages are read from a flat file database and returned
 as one long string.  They are preceded in the database by a key and
 this is how they are referenced from code.  For example, one key is
 S2IL0001 which means:
@@ -78,10 +78,10 @@ above for examples.
 
 --% Message Database Code and Message Utility Functions
 
-SETANDFILEQ($cacheMessages,'T)  -- for debugging purposes
-SETANDFILEQ($testingErrorPrefix, '"Daly Bug")
+DEFPARAMETER($cacheMessages, 'T)  -- for debugging purposes
+DEFPARAMETER($testingErrorPrefix, '"Daly Bug")
 
-SETANDFILEQ($texFormatting, false)
+DEFPARAMETER($texFormatting, false)
 
 --% Accessing the Database
 
@@ -92,15 +92,10 @@ string2Words l ==
 wordFrom(l,i) ==
   maxIndex := MAXINDEX l
   k := or/[j for j in i..maxIndex | l.j ~= char ('_ ) ] or return nil
-  buf := '""
-  while k < maxIndex and (c := l.k) ~= char ('_ ) repeat
-    ch :=
-      c = char '__   => l.(k := 1+k)  --this may exceed bounds
-      c
-    buf := STRCONC(buf,ch)
+  k0 := k
+  while k <= maxIndex and (c := l.k) ~= char ('_ ) repeat
     k := k + 1
-  if k = maxIndex and (c := l.k) ~= char ('_ ) then buf := STRCONC(buf,c)
-  [buf,k+1]
+  [SUBSEQ(l, k0, k), k + 1]
 
 DEFPARAMETER($msg_hash, nil)
 
@@ -225,7 +220,7 @@ substituteSegmentedMsg(msg,args) ==
       --end of the list. (using %n and %y)
       l :=
          PAIRP(arg) =>
-           MEMQ(char 'y,q) or (CAR arg = '"%y") or ((LENGTH arg) = 1)  =>
+           MEMQ(char 'y, q) or (first arg = '"%y") or ((LENGTH arg) = 1)  =>
              APPEND(REVERSE arg, l)
            head := first arg
            tail := rest arg
@@ -263,11 +258,11 @@ addBlanks msg ==
   NREVERSE msg1
 
 
-SETANDFILEQ($msgdbPrims,'( %b %d %l %i %u %U %n %x %ce %rj "%U" "%b" "%d" "%l" "%i" "%u" "%U" "%n" "%x" "%ce" "%rj"))
-SETANDFILEQ($msgdbPunct,'(_. _, _! _: _; _? _] _)  "." "," "!" ":" ";" "?" "]" ")"  ))
-SETANDFILEQ($msgdbNoBlanksBeforeGroup,['" ", " ", '"%", "%",_
+DEFPARAMETER($msgdbPrims, '( %b %d %l %i %u %U %n %x %ce %rj "%U" "%b" "%d" "%l" "%i" "%u" "%U" "%n" "%x" "%ce" "%rj"))
+DEFPARAMETER($msgdbPunct, '(_. _, _! _: _; _? _] _)  "." "," "!" ":" ";" "?" "]" ")"  ))
+DEFPARAMETER($msgdbNoBlanksBeforeGroup, ['" ", " ", '"%", "%",_
                             :$msgdbPrims, :$msgdbPunct])
-SETANDFILEQ($msgdbListPrims,'(%m %s %ce %rj "%m" "%s" "%ce" "%rj"))
+DEFPARAMETER($msgdbListPrims, '(%m %s %ce %rj "%m" "%s" "%ce" "%rj"))
 
 noBlankBeforeP word==
     INTEGERP word => false
@@ -275,11 +270,11 @@ noBlankBeforeP word==
     if STRINGP word and SIZE word > 1 then
        word.0 = char '% and word.1 = char 'x => return true
        word.0 = char " " => return true
-    (PAIRP word) and (CAR word in $msgdbListPrims) => true
+    (PAIRP word) and (first word in $msgdbListPrims) => true
     false
 
 $msgdbPunct := '(_[ _(  "[" "(" )
-SETANDFILEQ($msgdbNoBlanksAfterGroup,['" ", " ",'"%" ,"%",_
+DEFPARAMETER($msgdbNoBlanksAfterGroup, ['" ", " ",'"%" ,"%",_
                           :$msgdbPrims,:$msgdbPunct])
 
 noBlankAfterP word==
@@ -288,7 +283,7 @@ noBlankAfterP word==
     if STRINGP word and (s := SIZE word) > 1 then
        word.0 = char '% and word.1 = char 'x => return true
        word.(s-1) = char " " => return true
-    (PAIRP word) and (CAR word in $msgdbListPrims) => true
+    (PAIRP word) and (first word in $msgdbListPrims) => true
     false
 
 cleanUpSegmentedMsg msg ==
@@ -303,7 +298,7 @@ cleanUpSegmentedMsg msg ==
   msg1 := NIL
   for x in msg repeat
     if haveBlank and ((x in blanks) or (x in prims)) then
-      msg1 := CDR msg1
+      msg1 := rest msg1
     msg1 := cons(x,msg1)
     haveBlank := (x in blanks => true; NIL)
   msg1
@@ -344,7 +339,6 @@ sayKeyedMsgLocal(key, args) ==
   sayMSG msg'
 
 throwKeyedErrorMsg(kind,key,args) ==
-  BUMPERRORCOUNT kind
   sayMSG '" "
   if $testingSystem then sayMSG $testingErrorPrefix
   sayKeyedMsg(key,args)
@@ -494,15 +488,15 @@ flowSegmentedMsg(msg, len, offset) ==
         actualMarg := potentialMarg
         if lnl = 99999 then nl := ['%l,:nl]
         lnl := 99999
-      PAIRP(f) and CAR(f) in '("%m" %m '%ce "%ce" %rj "%rj") =>
+      PAIRP(f) and first(f) in '("%m" %m '%ce "%ce" %rj "%rj") =>
         actualMarg := potentialMarg
         nl := [f,'%l,:nl]
         lnl := 199999
       f in '("%i" %i ) =>
         potentialMarg := potentialMarg + 3
         nl := [f,:nl]
-      PAIRP(f) and CAR(f) in '("%t" %t) =>
-        potentialMarg := potentialMarg + CDR f
+      PAIRP(f) and first(f) in '("%t" %t) =>
+        potentialMarg := potentialMarg + rest f
         nl := [f,:nl]
       sbl := sayBrightlyLength f
       tot := lnl + offset + sbl + actualMarg
@@ -557,7 +551,7 @@ throwKeyedMsgCannotCoerceWithValue(val,t1,t2) ==
 
 --% Some Standard Message Printing Functions
 
-bright x == ['"%b",:(PAIRP(x) and NULL CDR LASTNODE x => x; [x]),'"%d"]
+bright x == ['"%b", :(PAIRP(x) and NULL rest LASTNODE x => x; [x]), '"%d"]
 --bright x == ['%b,:(ATOM x => [x]; x),'%d]
 
 mkMessage msg ==
@@ -703,7 +697,7 @@ brightPrintHighlight x ==
   sayString '"("
   brightPrint1 key
   if EQ(key,'TAGGEDreturn) then
-    rst:=[CAR rst,CADR rst,CADDR rst, '"environment (omitted)"]
+    rst := [first rst, CADR rst, CADDR rst, '"environment (omitted)"]
   for y in rst repeat
     sayString '" "
     brightPrint1 y
@@ -731,7 +725,7 @@ brightPrintHighlightAsTeX x ==
   sayString '"("
   brightPrint1 key
   if EQ(key,'TAGGEDreturn) then
-    rst:=[CAR rst,CADR rst,CADDR rst, '"environment (omitted)"]
+    rst := [first rst, CADR rst, CADDR rst, '"environment (omitted)"]
   for y in rst repeat
     sayString '" "
     brightPrint1 y
@@ -759,9 +753,9 @@ brightPrintCenter x ==
   y := NIL
   ok := true
   while x and ok repeat
-    if CAR(x) in '(%l "%l") then ok := NIL
-    else y := cons(CAR x, y)
-    x := CDR x
+    if first(x) in '(%l "%l") then ok := NIL
+    else y := cons(first x, y)
+    x := rest x
   y := NREVERSE y
   wid := sayBrightlyLength y
   if wid < $LINELENGTH then
@@ -781,9 +775,9 @@ brightPrintCenterAsTeX x ==
   lst := x
   while lst repeat
     words := nil
-    while lst and not (CAR(lst) = "%l") repeat
-      words := [CAR lst,: words]
-      lst := CDR lst
+    while lst and not (first(lst) = "%l") repeat
+      words := [first lst, : words]
+      lst := rest lst
     if lst then lst := cdr lst
     sayString '"\centerline{"
     words := nreverse words
@@ -806,9 +800,9 @@ brightPrintRightJustify x ==
   y := NIL
   ok := true
   while x and ok repeat
-    if CAR(x) in '(%l "%l") then ok := NIL
-    else y := cons(CAR x, y)
-    x := CDR x
+    if first(x) in '(%l "%l") then ok := NIL
+    else y := cons(first x, y)
+    x := rest x
   y := NREVERSE y
   wid := sayBrightlyLength y
   if wid < $LINELENGTH then

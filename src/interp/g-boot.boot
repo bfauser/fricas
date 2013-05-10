@@ -106,7 +106,7 @@ COMP_-2(args) ==
 
 COMP(lfun) ==
     #lfun ~= 1 => BREAK()
-    [COMP_-2 nf for nf in COMP_-1(CAR(lfun))]
+    [COMP_-2 nf for nf in COMP_-1(first(lfun))]
 
 compSPADSLAM(name, argl, bodyl) ==
     al := INTERNL(name, '";AL")
@@ -115,7 +115,7 @@ compSPADSLAM(name, argl, bodyl) ==
     g2 := GENSYM()
     u :=
          not(argl) => [[], [], [auxfn]]
-         not(CDR(argl)) => [[g1], ["devaluate", g1], [auxfn, g1]]
+         not(rest(argl)) => [[g1], ["devaluate", g1], [auxfn, g1]]
          [g1, ["devaluateList", g1], _
            ["APPLY", ["FUNCTION", auxfn], g1]]
     [arg, argtran, app] := u
@@ -153,26 +153,28 @@ lambdaHelper2(y) == MEMQ(y, $newBindings)
 
 compTran1(x) ==
     ATOM(x) => nil
-    u := CAR(x)
+    u := first(x)
     u = "QUOTE" => nil
     if u = "MAKEPROP" and $TRACELETFLAG then
+<<<<<<< HEAD
         RPLAC(CAR x, "MAKEPROP-SAY")
+=======
+        rplac(first x, "MAKEPROP-SAY")
+>>>>>>> upstream/master
     MEMQ(u, '(SPADLET SETQ LET)) =>
-        if NOT($BOOT) or MEMQ($FUNNAME, $traceletFunctions) then
-            NCONC(x, $FUNNAME_TAIL)
-            RPLACA(x, "LETT")
-        else if $TRACELETFLAG then
-            -- this devious trick (due to RDJ) is needed since the compile
-            -- looks only at global variables in top-level environment;
-            -- thus SPADLET cannot itself test for such flags (7/83).
-            RPLACA(x, "/TRACE-LET")
-        else if u = "LET" then RPLACA(x, "SPADLET")
+        NCONC(x, $FUNNAME_TAIL)
+        RPLACA(x, "LETT")
         compTran1(CDDR x)
         NOT(u = "SETQ") =>
             IDENTP(CADR(x)) => PUSHLOCVAR(CADR(x))
             EQCAR(CADR(x), "FLUID") =>
                 PUSH(CADADR(x), $fluidVars)
+<<<<<<< HEAD
                 RPLAC(CADR(x), CADADR(x))
+=======
+                rplac(CADR(x), CADADR(x))
+            BREAK()
+>>>>>>> upstream/master
             MAPC(FUNCTION PUSHLOCVAR, LISTOFATOMS(CADR x))
     MEMQ(u, '(PROG LAMBDA)) =>
         $newBindings : local := nil
@@ -181,7 +183,7 @@ compTran1(x) ==
         $locVars := REMOVE_-IF(FUNCTION lambdaHelper2, $locVars)
         [u, CADR(x), :res]
     compTran1 u
-    compTran1(CDR x)
+    compTran1(rest x)
 
 compTran(x) ==
     $fluidVars : local := nil
@@ -191,7 +193,7 @@ compTran(x) ==
     [x3, :xlt3] := xl3
     x3 :=
         NULL(xlt3) and (ATOM(x3) or _
-                            CAR(x3) = "SEQ" or _
+                            first(x3) = "SEQ" or _
                             not(CONTAINED("EXIT", x3))) => x3
         ["SEQ", :xl3]
     fluids := REMDUP(NREVERSE($fluidVars))
@@ -208,16 +210,16 @@ compTran(x) ==
 
 compNewnam(x) ==
     ATOM(x) => nil
-    y := CAR(x)
+    y := first(x)
     ATOM(y) =>
-        if not(y = "QUOTE") then compNewnam(CDR(x))
+        if not(y = "QUOTE") then compNewnam(rest(x))
         if y = "CLOSEDFN" and BOUNDP('$CLOSEDFNS) then
             u := makeClosedfnName()
             PUSH([u, CADR(x)], $CLOSEDFNS)
             RPLACA(x, "FUNCTION")
-            RPLACA(CDR(x), u)
-    compNewnam(CAR(x))
-    compNewnam(CDR(x))
+            RPLACA(rest(x), u)
+    compNewnam(first(x))
+    compNewnam(rest(x))
 
 compFluidize(x) ==
     x and SYMBOLP(x) and x ~= "$" and x ~= "$$" and _
@@ -229,17 +231,6 @@ compFluidize(x) ==
     b := compFluidize(QCDR(x))
     a => CONS(a, b)
     b
-
-compFluidize1(x) ==
-    x and SYMBOLP(x) and x ~= "$" and x ~= "$$" and _
-      SCHAR('"$", 0) = SCHAR(PNAME(x), 0) _
-      and not(DIGITP (SCHAR(PNAME(x), 1))) => ["FLUID", x]
-    ATOM(x) => x
-    QCAR(x) = "FLUID" => x
-    a := compFluidize1(QCAR(x))
-    b := compFluidize1(QCDR(x))
-    a = QCAR(x) and b = QCDR(x) => x
-    CONS(a, b)
 
 PUSHLOCVAR(x) ==
     x ~= "$" and SCHAR('"$", 0) = SCHAR(PNAME(x), 0) _
@@ -257,14 +248,14 @@ comp_expand(x) ==
     x is ["COLLECTVEC", :body] => comp_expand(expandCOLLECTV(body))
     a := comp_expand (car x)
     b := comp_expand (cdr x)
-    a = CAR x and b = CDR x => x
+    a = first x and b = rest x => x
     CONS(a, b)
 
 repeat_tran(l, lp) ==
     ATOM(l) => ERROR('"REPEAT FORMAT ERROR")
-    KAR(KAR(l)) in '(EXIT RESET IN ON GSTEP ISTEP STEP
+    IFCAR(IFCAR(l)) in '(EXIT RESET IN ON GSTEP ISTEP STEP
                      UNTIL WHILE SUCHTHAT) =>
-        repeat_tran(CDR(l), [CAR(l), :lp])
+        repeat_tran(rest(l), [first(l), :lp])
     [NREVERSE(lp), :MKPF(l, "PROGN")]
 
 expandCOLLECT(l) ==
@@ -319,11 +310,11 @@ expandREPEAT(l) ==
     result_expr := nil
     for X in conds repeat
         ATOM(X) => BREAK()
-        U := CDR(X)
+        U := rest(X)
         -- A hack to increase the likelihood of small integers
         if X is ["STEP", ., i1, i2, :.] and member(i1, '(2 1 0 (One) (Zero)))
            and member(i2, '(1 (One))) then X := ["ISTEP", :U]
-        op := CAR(X)
+        op := first(X)
         op = "GSTEP" =>
             [var, empty_form, step_form, init_form] := U
             tests := [["OR", ["SPADCALL", empty_form],
@@ -338,7 +329,7 @@ expandREPEAT(l) ==
                 inc := tmp
             if op_limit then
                 -- If not atom compute only once
-                if not(ATOM(final := CAR(op_limit))) then
+                if not(ATOM(final := first(op_limit))) then
                     vl := [[(tmp := GENSYM()), final], :vl]
                     final := tmp
                 tests :=
@@ -356,7 +347,7 @@ expandREPEAT(l) ==
                 vl := [[(tmp := GENSYM()), inc], :vl]
                 inc := tmp
             if op_limit then
-                if not(ATOM(final := CAR(op_limit))) then
+                if not(ATOM(final := first(op_limit))) then
                     -- If not atom compute only once
                     vl := [[(tmp := GENSYM()), final], :vl]
                     final := tmp
@@ -369,32 +360,32 @@ expandREPEAT(l) ==
                             ["greater_SI", var, final]]),
                               :tests]
             vl := [[var, start,
-                 (member(inc, '(1 (One))) => MK_inc_SI(CAR(U));
+                 (member(inc, '(1 (One))) => MK_inc_SI(first(U));
                    ["add_SI", var, inc])], :vl]
         op = "ON" =>
-            tests := [["ATOM", CAR(U)], :tests]
-            vl := [[CAR(U), CADR(U), ["CDR", CAR(U)]], :vl]
-        op = "RESET" => tests := [["PROGN", CAR(U), nil], :tests]
+            tests := [["ATOM", first(U)], :tests]
+            vl := [[first(U), CADR(U), ["CDR", first(U)]], :vl]
+        op = "RESET" => tests := [["PROGN", first(U), nil], :tests]
         op = "IN" =>
             tt :=
-                SYMBOLP(CAR(U)) and SYMBOL_-PACKAGE(CAR(U))
+                SYMBOLP(first(U)) and SYMBOL_-PACKAGE(first(U))
                   and $TRACELETFLAG =>
-                    [["/TRACELET-PRINT", CAR(U), (CAR U)]]
+                    [["/TRACELET-PRINT", first(U), (first U)]]
                 nil
             tests := [["OR", ["ATOM", (G := GENSYM())],
-                             ["PROGN", ["SETQ", CAR(U), ["CAR", G]],
+                             ["PROGN", ["SETQ", first(U), ["CAR", G]],
                                :APPEND(tt, [nil])]], :tests]
             vl := [[G, CADR(U), ["CDR", G]], :vl]
-            vl := [[CAR(U), nil], :vl]
+            vl := [[first(U), nil], :vl]
         op = "UNTIL" =>
             G := GENSYM()
             tests := [G, :tests]
-            vl := [[G, nil, CAR(U)], :vl]
-        op = "WHILE" => tests := [["NULL", CAR(U)], :tests]
-        op = "SUCHTHAT" => body := ["COND", [CAR(U), body]]
+            vl := [[G, nil, first(U)], :vl]
+        op = "WHILE" => tests := [["NULL", first(U)], :tests]
+        op = "SUCHTHAT" => body := ["COND", [first(U), body]]
         op = "EXIT" =>
             result_expr => BREAK()
-            result_expr := CAR(U)
+            result_expr := first(U)
         FAIL()
     expandDO(NREVERSE(vl), MKPF(NREVERSE(tests), "OR"), result_expr,
              seq_opt(["SEQ", ["EXIT", body]]))
@@ -406,7 +397,7 @@ expandCOLLECTV(l) ==
     counter_var := nil
     ret_val := nil
     for iter in iters repeat
-        op := CAR(iter)
+        op := first(iter)
         op in '(SUCHTHAT WHILE UNTIL GSTEP) =>
             ret_val := ["LIST2VEC", ["COLLECT", :l]]
             return nil -- break loop
@@ -418,7 +409,7 @@ expandCOLLECTV(l) ==
                 counter_var := var
             -- there may not be a limit
             if opt_limit then
-                limit := CAR(opt_limit)
+                limit := first(opt_limit)
                 cond :=
                     step = 1 =>
                         start = 1 => limit
@@ -436,7 +427,7 @@ expandCOLLECTV(l) ==
         iters := [["ISTEP", counter_var, 0, 1], :iters]
     lv :=
         NULL(conds) => FAIL()
-        NULL(CDR(conds)) => CAR(conds)
+        NULL(rest(conds)) => first(conds)
         ["MIN", :conds]
     res := GENSYM()
     ["PROGN", ["SPADLET", res, ["GETREFV", lv]],
@@ -456,3 +447,97 @@ COMP370(fn) ==
     nbody := ["DEFUN", fname, args, :body]
     if $comp370_apply then
         FUNCALL($comp370_apply, fname, nbody)
+
+MKPF(l, op) ==
+    if FLAGP(op, "NARY") then
+        l := MKPFFLATTEN1(l, op, nil)
+    MKPF1(l, op)
+
+MKPFFLATTEN(x, op) ==
+    ATOM(x) => x
+    EQL(first(x), op) => [op, :MKPFFLATTEN1(rest x, op, nil)]
+    [MKPFFLATTEN(first x, op), :MKPFFLATTEN(rest x, op)]
+
+MKPFFLATTEN1(l, op, r) ==
+    NULL(l) => r
+    x := MKPFFLATTEN(first(l), op)
+    MKPFFLATTEN1(rest l, op, APPEND(r, (x is [=op, :r1] => r1; [x])))
+
+MKPF1(l, op) ==
+    op = "PLUS" =>
+        l := S_-(l, '(0 (ZERO)))
+        NULL(l) => 0
+        rest(l) => ["PLUS", :l]
+        first(l)
+    op = "TIMES" =>
+        not(NULL(S_*(l, '(0 (ZERO))))) => 0
+        l := S_-(l, '(1 (ONE)))
+        NULL(l) => 1
+        rest(l) => ["TIMES", :l]
+        first(l)
+    op = "QUOTIENT" =>
+        BREAK()
+        l is [x, y] =>
+            EQL(x, 0) => 0
+            EQL(y, 1) => x
+            ["QUOTIENT", :l]
+        FAIL()
+    op = "MINUS" =>
+        rest(l) => FAIL()
+        x := first(l)
+        NUMBERP(x) => -x
+        EQCAR(x, "MINUS") => first(rest(x))
+        ["MINUS", :l]
+    op = "DIFFERENCE" => BREAK()
+    op = "EXPT" =>
+        l is [x, y] =>
+            EQL(y, 0) => 1
+            EQL(y, 1) => x
+            member(x, '(0 1 (ZERO) (ONE))) => x
+            ["EXPT", :l]
+        FAIL() 
+    op = "OR" =>
+        MEMBER(true, l) => ["QUOTE", true]
+        l := REMOVE(false, l)
+        NULL(l) => false
+        rest(l) => ["OR", :l]
+        first(l)
+    op = "or" =>
+        MEMBER(true, l) => true
+        l := REMOVE(false, l)
+        NULL(l) => false
+        rest(l) => ["or", :l]
+        first(l)
+    op = "NULL" =>
+        rest(l) => FAIL()
+        l is [["NULL", :l1]] => first(l1)
+        first(l) = true => false
+        NULL(first(l)) => ["QUOTE", true]
+        ["NULL", :l]
+    op = "and" =>
+        l := REMOVE(true, REMOVE("true", l))
+        NULL(l) => true
+        rest(l) => ["and", :l]
+        first(l)
+    op = "AND" =>
+        l := REMOVE(true, REMOVE("true", l))
+        NULL(l) => ["QUOTE", true]
+        rest(l) => ["AND", :l]
+        first(l)
+    op = "PROGN" =>
+        l := REMOVE(nil, l)
+        NULL(l) => nil
+        rest(l) => ["PROGN", :l]
+        first(l)
+    op = "SEQ" =>
+        l is [["EXIT", :l1], :.] => first(l1)
+        rest(l) => ["SEQ", :l]
+        first(l)
+    op = "LIST" =>
+        l => ["LIST", :l]
+        nil
+    op = "CONS" =>
+        rest(l) => ["CONS", :l]
+        first(l)
+    [op, :l]
+

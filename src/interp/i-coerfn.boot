@@ -94,7 +94,7 @@ all these coercion functions have the following result:
      coerceByTable
 )endif
 
-SETANDFILEQ($coerceFailure,GENSYM())
+DEFPARAMETER($coerceFailure, GENSYM())
 
 position1(x,y) ==
   -- this is used where we want to assume a 1-based index
@@ -361,7 +361,7 @@ Dmp2Up(u, source is [dmp,vl,S],target is [up,var,T]) ==
     y:= coerceInt(objNewWrap([[e1,:c]],S1),T) =>
       -- need to be careful about zeros
       p:= ASSQ(exp,x) =>
-        c' := SPADCALL(CDR p,objValUnwrap(y),plusfunc)
+        c' := SPADCALL(rest p, objValUnwrap(y), plusfunc)
         c' = zero => x := REMALIST(x,exp)
         RPLACD(p,c')
       zero = objValUnwrap(y) => 'iterate
@@ -374,8 +374,8 @@ removeVectorElt(v,pos) ==
   LIST2VEC [x for x in VEC2LIST v for y in 0.. | not (y=pos)]
 
 removeListElt(l,pos) ==
-  pos = 0 => CDR l
-  [CAR l, :removeListElt(CDR l,pos-1)]
+  pos = 0 => rest l
+  [first l, :removeListElt(rest l, pos - 1)]
 
 NDmp2domain(u,source is [ndmp,x,S],target) ==
   -- a null NDMP = 0
@@ -444,7 +444,7 @@ Expr2Dmp(u,source is [Expr,S], target is [dmp,v2,T]) ==
 
     null rest v2 =>
         for term in univ repeat
-            RPLACA(term, VECTOR CAR term)
+            RPLACA(term, VECTOR first term)
         univ
 
     -- more than one variable
@@ -502,11 +502,11 @@ Expr2Up(u,source is [Expr,S], target is [.,var,T]) ==
     sup        := ['SparseUnivariatePolynomial, source]
 
     fracUniv   := SPADCALL(u, varKernel, univFunc)
-    denom      := CDR fracUniv
+    denom      := rest fracUniv
 
     not equalOne(denom, sup) => coercionFailure()
 
-    numer      := CAR fracUniv
+    numer      := first fracUniv
     uniType := ['UnivariatePolynomial, var, source]
     (z := coerceInt(objNewWrap(numer, uniType), target)) => objValUnwrap z
     coercionFailure()
@@ -539,7 +539,7 @@ Factored2Factored(u,oldmode,newmode) ==
   u' := unwrap u
   unit' := coerceInt(objNewWrap(first u',oldargmode),newargmode)
   null unit' => coercionFailure()
-  factors := KDR u'
+  factors := IFCDR u'
   factors' := [(coerceFFE(x,oldargmode,newargmode)) for x in factors]
   member('failed,factors') => coercionFailure()
   [objValUnwrap(unit'),:factors']
@@ -654,15 +654,13 @@ V2L(v, source is [.,S], target is [.,T]) ==
 
 L2M(u,[.,D],[.,R]) ==
   u = '_$fromCoerceable_$ => nil
-  D is ['List,E] and isRectangularList(u,#u,# first u) =>
-    u' := nil
-    for x in u repeat
-      x' := nil
-      for y in x repeat
+  D is ['List,E] and isRectangularList(u, n := #u, m :=# first u) =>
+    v := MAKE_MATRIX(n, m)
+    for x in u for i in 0..(n-1) repeat
+      for y in x for j in 0..(m-1) repeat
         (y' := coerceInt(objNewWrap(y,E),R)) or coercionFailure()
-        x' := [objValUnwrap(y'),:x']
-      u' := [LIST2VEC reverse x',:u']
-    LIST2VEC reverse u'
+        QSETAREF2O(v, i, j, objValUnwrap(y'), 0, 0)
+    v
   coercionFailure()
 
 L2Record(l,[.,D],[.,:al]) ==
@@ -731,44 +729,53 @@ isRectangularList(x,p,q) ==
 
 --% Matrix
 
+M2VV(x) ==
+    n := ANROWS(x)
+    m := ANCOLS(x)
+    v := MAKE_-ARRAY(n)
+    for i in 0..(n - 1) repeat
+        vi := MAKE_-ARRAY(m)
+        for j in 0..(m - 1) repeat
+            QSETAREF1(vi, j, QAREF2O(x, i, j, 0, 0))
+        QSETAREF1(v, i, vi)
+    v
+
 M2L(x,[.,S],target) ==
   mid := ['Vector,['Vector,S]]
   x = '_$fromCoerceable_$ => canCoerce(mid,target)
-  (u := coerceInt(objNewWrap(x,mid),target)) or coercionFailure()
+  (u := coerceInt(objNewWrap(M2VV x, mid), target)) or coercionFailure()
   objValUnwrap u
 
 M2M(x,[.,R],[.,S]) ==
-  x = '_$fromCoerceable_$ => canCoerce(R,S)
-  n := # x
-  m := # x.0
-  v := nil
-  for i in 0..(n-1) repeat
-    u := nil
-    for j in 0..(m-1) repeat
-      y := x.i.j
-      (y' := coerceInt(objNewWrap(y,R),S)) or coercionFailure()
-      u := [objValUnwrap y',:u]
-    v := [LIST2VEC reverse u,:v]
-  LIST2VEC reverse v
+    x = '_$fromCoerceable_$ => canCoerce(R,S)
+    n := ANROWS(x)
+    m := ANCOLS(x)
+    v := MAKE_MATRIX(n, m)
+    for i in 0..(n - 1) repeat
+        for j in 0..(m - 1) repeat
+            y := QAREF2O(x, i, j, 0, 0)
+            (y' := coerceInt(objNewWrap(y, R), S)) or coercionFailure()
+            QSETAREF2O(v, i, j, objValUnwrap y', 0, 0)
+    v
 
 M2Rm(x,source is [.,R],[.,p,q,S]) ==
-  x = '_$fromCoerceable_$ => nil
-  n:= #x
-  m:= #x.0
-  n=p and m=q => M2M(x,source,[nil,S])
-  coercionFailure()
+    x = '_$fromCoerceable_$ => nil
+    n := ANROWS(x)
+    m := ANCOLS(x)
+    n = p and m = q => M2M(x, source, [nil, S])
+    coercionFailure()
 
 M2Sm(x,source is [.,R],[.,p,S]) ==
-  x = '_$fromCoerceable_$ => nil
-  n:= #x
-  m:= #x.(0)
-  n=m and m=p => M2M(x,source,[nil,S])
-  coercionFailure()
+    x = '_$fromCoerceable_$ => nil
+    n := ANROWS(x)
+    m := ANCOLS(x)
+    n = m and m = p => M2M(x, source, [nil, S])
+    coercionFailure()
 
 M2V(x,[.,S],target) ==
   mid := ['Vector,['Vector,S]]
   x = '_$fromCoerceable_$ =>  canCoerce(mid,target)
-  (u := coerceInt(objNewWrap(x,mid),target)) or coercionFailure()
+  (u := coerceInt(objNewWrap(M2VV x, mid), target)) or coercionFailure()
   objValUnwrap u
 
 --% Multivariate Polynomial
@@ -1275,9 +1282,9 @@ Rm2V(x,[.,.,.,R],target) == M2V(x,['Matrix,R],target)
 
 Scr2Scr(u, source is [.,S], target is [.,T]) ==
   u = '_$fromCoerceable_$ => canCoerce(S,T)
-  null (v := coerceInt(objNewWrap(CDR u,S),T)) =>
+  null (v := coerceInt(objNewWrap(rest u, S), T)) =>
     coercionFailure()
-  [CAR u, :objValUnwrap(v)]
+  [first u, :objValUnwrap(v)]
 
 --% SparseUnivariatePolynomialnimial
 
@@ -1685,34 +1692,34 @@ Var2OtherPS(u,source,target is [.,x,S]) ==
 --% Vector
 
 V2M(u,[.,D],[.,R]) ==
-  u = '_$fromCoerceable_$ =>
-    D is ['Vector,:.] => nil  -- don't have data
-    canCoerce(D,R)
+  u = '_$fromCoerceable_$ => nil
+    -- D is ['Vector,:.] => nil  -- don't have data
+    -- canCoerce(D,R)
   -- first see if we are coercing a vector of vectors
   D is ['Vector,E] and
-    isRectangularVector(u,MAXINDEX u,MAXINDEX u.0) =>
-      LIST2VEC
-        [LIST2VEC [objValUnwrap(coerceInt(objNewWrap(x.j,E),R))
-           for j in 0..MAXINDEX(x:=u.i)] for i in 0..MAXINDEX u]
+    isRectangularVector(u, n := MAXINDEX u, m := MAXINDEX u.0) =>
+      res := MAKE_MATRIX(n + 1, m + 1)
+      for i in 0..n repeat
+          x := u.i
+          for j in 0..m repeat
+              y' := objValUnwrap(coerceInt(objNewWrap(x.j, E), R))
+              QSETAREF2O(res, i, j, y', 0, 0)
+      res
   -- if not, try making it into a 1 by n matrix
   coercionFailure()
 --LIST2VEC [LIST2VEC [objValUnwrap(coerceInt(objNewWrap(u.i,D),R))
 --  for i in 0..MAXINDEX(u)]]
 
-V2Rm(u,[.,D],[.,n,m,R]) ==
+V2Rm(u, source is [., D], [., n, m, R]) ==
   u = '_$fromCoerceable_$ => nil
   D is [.,E,:.] and isRectangularVector(u,n-1,m-1) =>
-    LIST2VEC
-      [LIST2VEC [objValUnwrap(coerceInt(objNewWrap(x.j,E),R))
-         for j in 0..MAXINDEX(x:=u.i)] for i in 0..MAXINDEX u]
+      V2M(u, source, ["Matrix", R])
   coercionFailure()
 
-V2Sm(u,[.,D],[.,n,R]) ==
+V2Sm(u, source is [., D], [., n, R]) ==
   u = '_$fromCoerceable_$ => nil
   D is [.,E,:.] and isRectangularVector(u,n-1,n-1) =>
-    LIST2VEC
-      [LIST2VEC [objValUnwrap(coerceInt(objNewWrap(x.j,E),R))
-         for j in 0..MAXINDEX(x:=u.i)] for i in 0..MAXINDEX u]
+      V2M(u, source, ["Matrix", R])
   coercionFailure()
 
 isRectangularVector(x,p,q) ==
@@ -1750,8 +1757,8 @@ P2Us(u, source is [.,S], target is [.,T,var,cen], type) ==
   package := ['ExpressionToUnivariatePowerSeries, S, E]
   func := getFunctionFromDomain(type, package, [E, EQtype])
   newObj := SPADCALL(objValUnwrap(newU), eq, func)
-  newType := CAR newObj
-  newVal  := CDR newObj
+  newType := first newObj
+  newVal  := rest newObj
   newType = target => newVal
   finalObj := coerceInt(objNewWrap(newVal, newType), target)
   null finalObj => coercionFailure()
@@ -1849,7 +1856,7 @@ commuteSquareMatrix(u,source,S,target,T) ==
   S' := [sm,n,$Integer]
   for i in 0..(n-1) repeat
     for j in 0..(n-1) repeat
-      (e := u.i.j) = zero => 'iterate
+      (e := QAREF2O(u, i, j, 0, 0)) = zero => 'iterate
       (e' := coerceInt(objNewWrap(e,S),target)) or coercionFailure()
       (Eij := coerceInt(objNewWrap(makeEijSquareMatrix(i,j,n),S'),T)) or
         coercionFailure()
@@ -1859,10 +1866,9 @@ commuteSquareMatrix(u,source,S,target,T) ==
   u'
 
 makeEijSquareMatrix(i, j, dim) ==
-  -- assume using 0 based scale, makes a dim by dim matrix with a
-  -- 1 in the i,j position, zeros elsewhere
-  LIST2VEC [LIST2VEC [((i=r) and (j=c) => 1; 0)
-    for c in 0..(dim-1)] for r in 0..(dim-1)]
+    res := MAKE_MATRIX1(dim, dim, 0)
+    QSETAREF2O(res, i, j, 1, 0, 0)
+    res
 
 --% Univariate Polynomial and Sparse Univariate Polynomial
 
@@ -1954,7 +1960,7 @@ commuteMPolyCat(u,source,S,target,T) ==
 -- a function like deconstructTower.  RSS 8-1-85
 ------------------------------------------------------------------------
 
-SETANDFILEQ($CoerceTable, '(                                          _
+DEFPARAMETER($CoerceTable, '(                                          _
   (Complex . ( _
     (Expression                       indeterm   Complex2Expr) _
     (Factored                         indeterm   Complex2FR) _
@@ -2034,9 +2040,6 @@ SETANDFILEQ($CoerceTable, '(                                          _
     (Tuple                                indeterm   L2Tuple) _
     (Vector                               indeterm   L2V) _
     ))_
-  ))
-
-SETANDFILEQ($CoerceTable,NCONC($CoerceTable,'( _
   (Matrix . ( _
     (List                                 indeterm   M2L) _
     (RectangularMatrix                    partial    M2Rm) _
@@ -2157,12 +2160,12 @@ SETANDFILEQ($CoerceTable,NCONC($CoerceTable,'( _
     (SquareMatrix                         indeterm   V2Sm) _
     (Stream                               indeterm   Agg2Agg) _
     ) ) _
-  ) ) )
+  ) )
 
 -- this list is too long for the parser, so it has to be split into parts
 -- specifies the commute functions
 -- commute stands for partial commute function
---SETANDFILEQ($CommuteTable, '(                                           _
+--DEFPARAMETER($CommuteTable, '(                                           _
 --  (DistributedMultivariatePolynomial . (                                _
 --    (DistributedMultivariatePolynomial    commute    commuteMultPol)    _
 --    (Complex                              commute    commuteMultPol)    _
@@ -2237,7 +2240,7 @@ SETANDFILEQ($CoerceTable,NCONC($CoerceTable,'( _
 --    ))                                                                  _
 --  ))
 
-SETANDFILEQ($CommuteTable, '(                                           _
+DEFPARAMETER($CommuteTable, '(                                           _
   (Complex . (                                                         _
     (DistributedMultivariatePolynomial    commute    commuteG2)         _
     (MultivariatePolynomial               commute    commuteG2)         _

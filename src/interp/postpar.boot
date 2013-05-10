@@ -32,9 +32,8 @@
 
 )package "BOOT"
 
---% Yet Another Parser Transformation File
---These functions are used by for BOOT and SPAD code
---(see new2OldLisp, e.g.)
+-- Yet Another Parser Transformation File
+-- These functions are used by for SPAD code
 
 postTransform y ==
   x:= y
@@ -50,13 +49,10 @@ displayPreCompilationErrors() ==
   errors:=
     1<n => '"errors"
     '"error"
-  if $InteractiveMode
-    then sayBrightly ['"   Semantic ",errors,'" detected: "]
-    else
-      heading:=
+  heading:=
         $topOp ~= '$topOp => ['"   ",$topOp,'" has"]
         ['"   You have"]
-      sayBrightly [:heading,'%b,n,'%d,'"precompilation ",errors,'":"]
+  sayBrightly [:heading, '%b, n, '%d, '"precompilation ", errors, '":"]
   if 1<n then
     (for x in $postStack for i in 1.. repeat sayMath ['"   ",i,'"_) ",:x])
     else sayMath ['"    ",:first $postStack]
@@ -77,9 +73,7 @@ postTranList x == [postTran y for y in x]
 
 postBigFloat x ==
   [.,mant, expon] := x
-  $BOOT => FLOAT(mant) * FLOAT(10)^expon
-  eltword := if $InteractiveMode then "$elt" else 'elt
-  postTran [[eltword,'(Float),'float],[",",[",",mant,expon],10]]
+  postTran [["elt", '(Float), 'float], [",", [",", mant, expon], 10]]
 
 postAdd ['add,a,:b] ==
   null b => postCapsule a
@@ -92,9 +86,8 @@ checkWarningIndentation() ==
 
 postCapsule x ==
   x isnt [op,:.] => checkWarningIndentation()
-  INTEGERP op or op = "==" => ['CAPSULE,postBlockItem x]
   op = ";" => ['CAPSULE,:postBlockItemList postFlatten(x,";")]
-  op = "if" => ['CAPSULE,postBlockItem x]
+  op = "if" or INTEGERP op or op = "==" => ['CAPSULE, postBlockItem x]
   checkWarningIndentation()
 
 postQUOTE x == x
@@ -106,8 +99,6 @@ postColon u ==
 postColonColon u ==
   -- for Lisp package calling
   -- boot syntax is package::fun but probably need to parenthesize it
-  $BOOT and u is ["::",package,fun] =>
-    INTERN(STRINGIMAGE fun, package)
   postForm u
 
 postAtSign ["@",x,y] == ["@",postTran x,:postType y]
@@ -126,10 +117,8 @@ postConstruct u ==
   u
 
 postError msg ==
-  BUMPERRORCOUNT 'precompilation
   xmsg:=
-    BOUNDP("$defOp") and not $InteractiveMode =>
-        [$defOp, '": " , :msg]
+    BOUNDP("$defOp") => [$defOp, '": " , :msg]
     msg
   $postStack:= [xmsg,:$postStack]
   nil
@@ -142,15 +131,11 @@ postMakeCons l ==
   ['cons,postTran first l,postMakeCons rest l]
 
 postAtom x ==
-  $BOOT => x
   x=0 => '(Zero)
   x=1 => '(One)
   EQ(x,'T) => 'T_$ -- rename T in spad code to T$
   IDENTP x and GETDATABASE(x,'NILADIC) => LIST x
   x
-
-postBlock ['Block,:l,x] ==
-  ['SEQ,:postBlockItemList l,['exit,postTran x]]
 
 postBlockItemList l == [postBlockItem x for x in l]
 
@@ -178,7 +163,7 @@ postDef [defOp,lhs,rhs] ==
 --+
   lhs is ["macro",name] => postMDef ["==>",name,rhs]
 
-  if not($BOOT) then recordHeaderDocumentation nil
+  recordHeaderDocumentation nil
   if $maxSignatureLineNumber ~= 0 then
     $docList := [['constructor,:$headerDocumentation],:$docList]
     $maxSignatureLineNumber := 0
@@ -187,16 +172,13 @@ postDef [defOp,lhs,rhs] ==
   [form,targetType]:=
     lhs is [":",:.] => rest lhs
     [lhs,nil]
-  if null $InteractiveMode and atom form then form := LIST form
+  if atom form then form := [form]
   newLhs:=
-    atom form => form
     [op,:argl]:= [(x is [":",a,.] => a; x) for x in form]
     [op,:postDefArgs argl]
   argTypeList:=
-    atom form => nil
     [(x is [":",.,t] => t; nil) for x in rest form]
   typeList:= [targetType,:argTypeList]
-  if atom form then form := [form]
   specialCaseForm := [nil for x in form]
   trhs :=
       rhs is ["=>", a, b] => ['IF,postTran a, postTran b, 'noBranch]
@@ -215,11 +197,7 @@ postDefArgs argl ==
 
 postMDef(t) ==
   [.,lhs,rhs] := t
-  $InteractiveMode and not $BOOT =>
-    lhs := postTran lhs
-    null IDENTP lhs => throwKeyedMsg("S2IP0001",NIL)
-    ['MDEF,lhs,NIL,NIL,postTran rhs]
-  lhs:= postTran lhs
+  lhs := postTran lhs
   [form,targetType]:=
     lhs is [":",:.] => rest lhs
     [lhs,nil]
@@ -262,7 +240,7 @@ postQuote [.,a] == ['QUOTE,a]
 
 postIf t ==
   t isnt ["if",:l] => t
-  ['IF,:[(null (x:= postTran x) and null $BOOT => 'noBranch; x)
+  ['IF, :[(null(x := postTran x) => 'noBranch; x)
     for x in l]]
 
 postJoin ['Join,a,:l] ==
@@ -280,9 +258,7 @@ postMapping u  ==
   ['Mapping,postTran target,:unTuple postTran source]
 
 postOp x ==
-  x=":=" =>
-    $BOOT => 'SPADLET
-    'LET
+  x = ":=" => 'LET
   x='Attribute => 'ATTRIBUTE
   x
 
@@ -308,9 +284,6 @@ postCollect [constructOp,:m,x] ==
           ['construct,:postTranList l]
         ['REDUCE,'append,0,[op,:itl,newBody]]
       [op,:itl,y]
-
-postTupleCollect [constructOp,:m,x] ==
-  postCollect [constructOp,:m,['construct,x]]
 
 postIteratorList x ==
   x is [p,:l] =>
@@ -344,8 +317,6 @@ tuple2List l ==
     u:= tuple2List l'
     a is ['SEGMENT,p,q] =>
       null u => ['construct,postTranSegment(p,q)]
-      $InteractiveMode and null $BOOT =>
-        ['append,['construct,postTranSegment(p,q)],tuple2List l']
       ["nconc",['construct,postTranSegment(p,q)],tuple2List l']
     null u => ['construct,postTran a]
     ["cons",postTran a,tuple2List l']
@@ -354,7 +325,7 @@ tuple2List l ==
 SEGMENT(a,b) == [i for i in a..b]
 
 postReduce ['Reduce,op,expr] ==
-  $InteractiveMode or expr is ['COLLECT,:.] =>
+  expr is ['COLLECT, :.] =>
     ['REDUCE,op,0,postTran expr]
   postReduce ['Reduce,op,['COLLECT,['IN,g:= GENSYM(),expr],
     ['construct,  g]]]
@@ -363,7 +334,9 @@ postFlattenLeft(x,op) ==--
   x is [ =op,a,b] => [:postFlattenLeft(a,op),b]
   [x]
 
-postSemiColon u == postBlock ['Block,:postFlattenLeft(u,";")]
+postSemiColon u ==
+    [:l, x] := postFlattenLeft(u, ";")
+    ['SEQ, :postBlockItemList l, ["exit", postTran x]]
 
 postSignature1(op, sig) ==
     sig1 := postType sig
@@ -405,10 +378,7 @@ postTuple u ==
   u is ["@Tuple", :l, a] => (["@Tuple", :postTranList rest u])
 
 postWhere ["where",a,b] ==
-  x:=
-    b is ['Block,:c] => BREAK()
-    LIST b
-  ["where",postTran a,:postTranList x]
+    ["where", postTran a, postTran b]
 
 postWith ["with",a] ==
   $insidePostCategoryIfTrue: local := true

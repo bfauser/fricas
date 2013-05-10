@@ -78,18 +78,25 @@ replaceArgDefs(header, edefs) ==
 -- which can not be converted to macros
 --
 
+DEFPARAMETER($restore_list, nil)
+
 define_macro(name, def) ==
-    SYMBOLP(name) => HPUT($MacroTable, name, [def])
-    name is [op, :args] =>
+    if SYMBOLP(name) then
+        def := [def]
+    else if name is [op, :args] and SYMBOLP(op) then
         args :=
             args is [",", args1] => rest(postFlatten(args, ","))
             args
-        HPUT($MacroTable, op, [def, :args])
-    SAY([name, def])
-    userError("Invalid macro definition")
+        name := op
+        def := [def, :args]
+    else
+        SAY([name, def])
+        userError("Invalid macro definition")
+    prev_def := HGET($MacroTable, name)
+    PUSH([name, :prev_def], $restore_list)
+    HPUT($MacroTable, name, def)
 
-
-walkWhereList(tree) ==
+do_walk_where_list(tree) ==
     lastIteration := false
     ress := nil
     while not(lastIteration) repeat
@@ -100,7 +107,7 @@ walkWhereList(tree) ==
             lastIteration := true
         el is ["==>", name, def] => define_macro(name, def)
         el is ["==", name, def] =>
-            HPUT($MacroTable, name, [def])
+            define_macro(name, def)
         el is [":", ., .] =>
             ress := [el, :ress]
         el is [",", pel, item] =>
@@ -126,14 +133,22 @@ walkWhereList(tree) ==
 -- Remove macros and where parts from global definitions
 --
 
+walkWhereList(name, def, env) ==
+    $restore_list : local := nil
+    edefs := do_walk_where_list env
+    ress := expandMacros(["==", replaceArgDefs(name, edefs), def])
+    for it in $restore_list repeat
+        [op, :def] := it
+        HPUT($MacroTable, op, def)
+    ress
+
 walkForm(tree) ==
     tree is ["==>", name, def] =>
         define_macro(name, def)
         nil
     tree is ["==", head, def] => expandMacros(tree)
     tree is ["where", ["==", name, def], env] =>
-        edefs := walkWhereList env
-        expandMacros(["==", replaceArgDefs(name, edefs), def])
+        walkWhereList(name, def, env)
     userError("Parsing error: illegal toplevel form")
     nil
 
@@ -145,7 +160,7 @@ isNiladic(head1) ==
 
 getCon(head1) ==
     SYMBOLP head1 => head1
-    CAR head1
+    first head1
 
 processGlobals1() ==
     for form in $globalDefs repeat
@@ -170,9 +185,9 @@ processGlobals () ==
     untypedDefs := []
     for def in $globalDefs repeat
         ["DEF", form, sig, sc, body] := def
-        cosig := CONS(nil, [categoryForm? ty for ty in CDR(sig)])
-        SETDATABASE(CAR form, 'COSIG, cosig)
-        if null CAR(sig) then
+        cosig := CONS(nil, [categoryForm? ty for ty in rest(sig)])
+        SETDATABASE(first form, 'COSIG, cosig)
+        if null first(sig) then
             untypedDefs := [def, :untypedDefs]
         else
             handleKind(def)
@@ -190,7 +205,7 @@ processGlobals () ==
 handleKind(df is ['DEF,form,sig,sc,body]) ==
     [op,:argl] := form
 
-    null CAR(sig) => nil
+    null first(sig) => nil
     if sig is [["Category"], :.] then
         if body is ['add,cat,capsule] then
             body := cat
@@ -221,7 +236,7 @@ boo_comp_cats() ==
         ["DEF", form, sig, sc, body] := def
         if sig is [["Category"], :.] then
             SAY(["doing", form, sig])
-            not("and"/[categoryForm? ty for ty in CDR(sig)]) =>
+            not("and"/[categoryForm? ty for ty in rest(sig)]) =>
                 hcats := cons(def, hcats)
             boo_comp1(def)
     for def in hcats repeat boo_comp1(def)
@@ -239,11 +254,11 @@ boo_comp1(x) ==
     $returnMode : local := $EmptyMode
     $leaveLevelStack : local := []
     $CategoryFrame : local := [[[]]]
-    $insideFunctorIfTrue : local := nil
-    $insideExpressionIfTrue : local := nil
-    $insideWhereIfTrue : local := nil
-    $insideCategoryIfTrue : local := nil
-    $insideCapsuleFunctionIfTrue : local := nil
+    $insideFunctorIfTrue : local := false
+    $insideExpressionIfTrue : local := false
+    $insideWhereIfTrue : local := false
+    $insideCategoryIfTrue : local := false
+    $insideCapsuleFunctionIfTrue : local := false
     $form : local := nil
     $e : local := $EmptyEnvironment
     $genSDVar : local :=  0
@@ -303,6 +318,7 @@ computeTargetMode(lhs, rhs) ==
 DEFVAR($RawParseOnly, false)
 DEFVAR($PostTranOnly, false)
 DEFVAR($FlatParseOnly, false)
+DEFVAR($TranslateOnly, false)
 DEFVAR($noEarlyMacroexpand, false)
 DEFVAR($SaveParseOnly, false)
 DEFVAR($globalDefs, nil)
@@ -350,10 +366,7 @@ S_process(x) ==
     $PrintOnly =>
         FORMAT(true, '"~S   =====>~%", $currentLine)
         PRETTYPRINT(x)
-    if $InteractiveMode then
-        processInteractive(x, false)
-    else
-        u := compTopLevel(x, $EmptyMode, $InteractiveFrame)
-        if u then $InteractiveFrame := THIRD(u)
+    u := compTopLevel(x, $EmptyMode, $InteractiveFrame)
+    if u then $InteractiveFrame := THIRD(u)
     if $semanticErrorStack then displaySemanticErrors()
     TERPRI()

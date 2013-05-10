@@ -217,7 +217,7 @@ formatOperationAlistEntry (entry:= [op,:modemaps]) ==
 
 formatOperation([[op,sig],.,[fn,.,n]],domain) ==
   opSigString := formatOpSignature(op,sig)
-  INTEGERP n and function Undef = KAR domain.n =>
+  INTEGERP n and function Undef = IFCAR(domain.n) =>
     if INTEGERP $commentedOps then $commentedOps := $commentedOps + 1
     concat(" --",opSigString)
   opSigString
@@ -352,9 +352,12 @@ formString u ==
   atom x => STRINGIMAGE x
   "STRCONC"/[STRINGIMAGE y for y in x]
 
+DEFPARAMETER($from_unparse, false)
+
 unparseInputForm u ==
   $formatSigAsTeX: local := 1
   $InteractiveMode: local := false
+  $from_unparse : local := true
   form2StringLocal u
 
 form2String u ==
@@ -387,8 +390,8 @@ form2String1 u ==
     STRINGP u => formWrapId u
     WRITE_-TO_-STRING formWrapId u
   u1 := u
-  op := CAR u
-  argl := CDR u
+  op := first u
+  argl := rest u
   op='Join or op= 'mkCategory => formJoin1(op,argl)
   $InteractiveMode and (u:= constructor? op) =>
     null argl => app2StringWrap(formWrapId constructorName op, u1)
@@ -413,8 +416,8 @@ form2String1 u ==
       null argl => [ '":" ]
       null rest argl => [ '":", form2String1 first argl ]
       formDecl2String(argl.0,argl.1)
-  op = "#" and PAIRP argl and LISTP CAR argl =>
-    STRINGIMAGE SIZE CAR argl
+  op = "#" and PAIRP argl and LISTP first argl =>
+    STRINGIMAGE SIZE first argl
   op = 'Join => formJoin2String argl
   op = "ATTRIBUTE" => form2String1 first argl
   op='Zero => 0
@@ -548,7 +551,7 @@ formDecl2String(left,right) ==
   whereBefore := $whereList
   ls:= form2StringLocal left
   rs:= form2StringLocal right
-  NE($whereList,whereBefore) and $permitWhere => ls
+  $whereList ~= whereBefore and $permitWhere => ls
   concat(form2StringLocal ls,'": ",rs)
 
 formJoin1(op,u) ==
@@ -631,13 +634,13 @@ tuple2String argl ==
         string
     fn2 x ==
       ATOM x => object2String x
-      -- [fn2 CAR x, :f CDR x]
+      -- [fn2 first x, :f rest x]
       [fn2 y for y in x]
 
 script2String s ==
   null s => '""   -- just to be safe
   if not PAIRP s then s := [s]
-  linearFormatForm(CAR s, CDR s)
+  linearFormatForm(first s, rest s)
 
 linearFormatName x ==
   atom x => x
@@ -711,8 +714,11 @@ application2String(op,argl, linkInfo) ==
       concat(application2String(f, argl, linkInfo), '"$", _
              form2String1 t)
   null argl =>
-    (op' := isInternalFunctionName(op)) => op'
-    app2StringWrap(formWrapId op, linkInfo)
+    res1 :=
+       (op' := isInternalFunctionName(op)) => op'
+       app2StringWrap(formWrapId op, linkInfo)
+    $from_unparse => concat(res1,'"()")
+    res1
   1=#argl =>
     first argl is ["<",:.] => concat(op,first argl)
     concat(app2StringWrap(formWrapId op, linkInfo), '"(", first argl, '")")

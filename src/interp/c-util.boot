@@ -85,7 +85,7 @@ displayComp level ==
   --mathprint removeZeroOne mkErrorExpr level
   pp removeZeroOne mkErrorExpr level
   sayBrightly ['"****** level",'%b,level,'%d,'" ******"]
-  [$x,$m,$f,$exitModeStack]:= ELEM($s,level)
+  [$x, $m, $f, $exitModeStack] := $s.(level - 1)
   ($X:=$x;$M:=$m;$F:=$f)
   SAY("$x:= ",$x)
   SAY("$m:= ",$m)
@@ -133,10 +133,23 @@ intersectionEnvironment(e,e') ==
   e'':= (ic => addContour(ic,ce); ce)
   --$ie:= e''   this line is for debugging purposes only
 
-deltaContour([[c,:cl],:el],[[c',:cl'],:el']) ==
+deltaContour([il1, :el],[il2, :el']) ==
   not el=el' => systemError '"deltaContour" --a cop out for now
-  eliminateDuplicatePropertyLists contourDifference(c,c') where
-    contourDifference(c,c') == [first x for x in tails c while (x~=c')]
+  n1 := #il1
+  n2 := #il2
+  dl := []
+  for i in 1..(n1 - n2) repeat
+      dl := cons(first(il1), dl)
+      il1 := rest(il1)
+  c1 := first(il1)
+  c2 := first(il2)
+  rest(il1) ~= rest(il2) => systemError '"deltaContour 2" --a cop out for now
+  cd := [first x for x in tails c1 while (x~=c2)]
+  dl := cons(cd, dl)
+  res0 := []
+  for l in dl repeat
+      res0 := APPEND(l, res0)
+  res := eliminateDuplicatePropertyLists res0 where
     eliminateDuplicatePropertyLists contour ==
       contour is [[x,:.],:contour'] =>
         LASSOC(x,contour') =>
@@ -144,6 +157,7 @@ deltaContour([[c,:cl],:el],[[c',:cl'],:el']) ==
           [first contour,:DELLASOS(x,eliminateDuplicatePropertyLists contour')]
         [first contour,:eliminateDuplicatePropertyLists contour']
       nil
+  res
 
 intersectionContour(c,c') ==
   $var: local := nil
@@ -169,7 +183,7 @@ intersectionContour(c,c') ==
       pair=(pair':= assoc(prop,p')) => pair
       --2. if property="value" and modes are unifiable, give intersection
       --       property="value" but value=genSomeVariable)()
-      (val':= KDR pair') and prop="value" and
+      (val':= IFCDR pair') and prop = "value" and
         (m:= unifiable(val.mode,val'.mode)) => ["value",genSomeVariable(),m,nil]
             --this tells us that an undeclared variable received
             --two different values but with identical modes
@@ -340,7 +354,7 @@ isDomainInScope(domain,e) ==
     false
   (name:= first domain)="Category" => true
   ASSQ(name,domainList) => true
---   null CDR domain or domainMember(domain,domainList) => true
+--   null rest domain or domainMember(domain,domainList) => true
 --   false
   isFunctor name => false
   true --is not a functor
@@ -448,7 +462,6 @@ printDashedLine() ==
    '"--------------------------------------------------------------------------"
 
 stackSemanticError(msg,expr) ==
-  BUMPERRORCOUNT "semantic"
   if $insideCapsuleFunctionIfTrue then msg:= [$op,": ",:msg]
   if atom msg then msg:= LIST msg
   entry:= [msg,expr]
@@ -557,8 +570,8 @@ extendsCategoryForm(domain,form,form') ==
 
 getmode(x,e) ==
   prop:=getProplist(x,e)
-  u:= LASSQ("value",prop) => u.mode
-  LASSQ("mode",prop)
+  u := QLASSQ("value", prop) => u.mode
+  QLASSQ("mode", prop)
 
 getmodeOrMapping(x,e) ==
   u:= getmode(x,e) => u

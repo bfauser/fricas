@@ -75,12 +75,9 @@ resetWorkspaceVariables () ==
   -- values. Some things are reset by start and not reset by restart.
   SETQ(_/COUNTLIST                  , NIL)
   $edit_file := nil
-  SETQ(_/SOURCEFILES                , NIL)
-  SETQ($sourceFiles                 , NIL)
   SETQ(_/PRETTY                     , NIL)
   SETQ(_/SPACELIST                  , NIL)
   SETQ(_/TIMERLIST                  , NIL)
-  SETQ($BOOT                        , NIL)
   SETQ($CommandSynonymAlist         , COPY($InitialCommandSynonymAlist))
   SETQ($IOindex                     , 1  )
   SETQ($e                           , [[NIL]])
@@ -105,7 +102,7 @@ set l ==  set1(l, $setOptions)
 set1(l,setTree) ==
   null l => displaySetVariableSettings(setTree,"")
   $setOptionNames : local := [x.0 for x in setTree]
-  arg := selectOption(DOWNCASE CAR l,$setOptionNames,'optionError)
+  arg := selectOption(DOWNCASE first l, $setOptionNames, 'optionError)
   setData := [arg,:LASSOC(arg,setTree)]
 
   -- check is the user is authorized for the set variable
@@ -120,7 +117,7 @@ set1(l,setTree) ==
     setfunarg :=
       l.1 = 'DEFAULT => "%initialize%"
 --    (arg2 := selectOption(l.1,['default],nil)) => "%initialize%"
-      KDR l
+      IFCDR l
     if functionp(setData.setVar)
       then FUNCALL( setData.setVar,setfunarg)
       else sayMSG '"   Function not implemented."
@@ -171,7 +168,7 @@ set1(l,setTree) ==
 
   -- for a sub-tree, we must recurse
   st = 'TREE =>
-    set1(KDR l,setData.setLeaf)
+    set1(IFCDR l, setData.setLeaf)
     NIL
   sayMessage ['"Cannot handle set tree node type",:bright st,"yet"]
   NIL
@@ -486,8 +483,10 @@ setFortTmpDir arg ==
   $fortranTmpDir := mode
 
 validateOutputDirectory x ==
-  AND(PATHNAME_-DIRECTORY(PROBE_-FILE(CAR(x))), NOT PATHNAME_-NAME  (PROBE_-FILE(CAR(x)))) =>
-    CAR(x)
+  odir := first(x)
+  AND(PATHNAME_-DIRECTORY(PROBE_-FILE(odir)),
+      NOT PATHNAME_-NAME  (PROBE_-FILE(odir))) =>
+    odir
   NIL
 
 describeSetFortTmpDir() ==

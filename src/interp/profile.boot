@@ -39,14 +39,14 @@ profileWrite() ==  --called from finalizeLisplib
   -- logically _*PRINT_-PRETTY_* should be local, but Common Lisp
   -- forces us to omit it.
   _*PRINT_-PRETTY_* := 'T
-  PRINT_-FULL(profileTran $profileAlist,outStream)
+  print_full2(profileTran $profileAlist, outStream)
   SHUT outStream
 
 profileTran alist ==
   $profileHash := MAKE_-HASH_-TABLE()
   for [opSig,:info] in alist repeat
     op := opOf opSig
-    sig := KAR KDR opSig
+    sig := IFCAR IFCDR opSig
     HPUT($profileHash,op,[[sig,:info],:HGET($profileHash,op)])
   [[key,:HGET($profileHash,key)] for key in mySort HKEYS $profileHash]
 
@@ -56,7 +56,7 @@ profileRecord(label,name,info) ==  --name: info is var: type or op: sig
 --    alist2    is ((name . info) ...)
   if $insideCapsuleFunctionIfTrue then
     op := $op
-    argl := CDR $form
+    argl := rest $form
     opSig := [$op,$signatureOfForm]
   else
     op := 'constructor

@@ -92,7 +92,7 @@ loadLib cname ==
   not update? =>
      loadLibNoUpdate(cname, cname, fullLibName)
   kind := GETDATABASE(cname,'CONSTRUCTORKIND)
-  if $printLoadMsgs = "on" then
+  if $printLoadMsgs then
     sayKeyedMsg("S2IL0002",[namestring fullLibName,kind,cname])
   load_quietly(fullLibName)
   clearConstructorCache cname
@@ -103,11 +103,11 @@ loadLib cname ==
   coSig :=
       u =>
           [[.,:sig],:.] := u
-          CONS(NIL,[categoryForm?(x) for x in CDR sig])
+          CONS(NIL, [categoryForm?(x) for x in rest sig])
       NIL
   -- in following, add property value false or NIL to possibly clear
   -- old value
-  if null CDR GETDATABASE(cname,'CONSTRUCTORFORM) then
+  if null rest GETDATABASE(cname, 'CONSTRUCTORFORM) then
       MAKEPROP(cname,'NILADIC,'T)
     else
       REMPROP(cname,'NILADIC)
@@ -118,7 +118,7 @@ loadLib cname ==
 
 loadLibNoUpdate(cname, libName, fullLibName) ==
   kind := GETDATABASE(cname,'CONSTRUCTORKIND)
-  if $printLoadMsgs = "on" then
+  if $printLoadMsgs then
     sayKeyedMsg("S2IL0002",[namestring fullLibName,kind,cname])
   if CATCH('VERSIONCHECK, load_quietly(fullLibName)) = -1
     then
@@ -159,7 +159,7 @@ convertOpAlist2compilerInfo(opalist) ==
                 for [op,:siglist] in opalist] where
       formatSig(op, [typelist, slot,:stuff]) ==
           pred := if stuff then first stuff else 'T
-          impl := if CDR stuff then CADR stuff else 'ELT -- handles 'CONST
+          impl := if rest stuff then CADR stuff else 'ELT -- handles 'CONST
           [[op, typelist], pred, [impl, '$, slot]]
 
 updateCategoryFrameForConstructor(constructor) ==
@@ -288,7 +288,7 @@ finalizeLisplib libName ==
   lisplibWrite('"sourceFile", namestring($edit_file), $libFile)
   lisplibWrite('"modemaps",removeZeroOne $lisplibModemapAlist,$libFile)
   opsAndAtts:= getConstructorOpsAndAtts($lisplibForm, kind)
-  lisplibWrite('"operationAlist",removeZeroOne CAR opsAndAtts,$libFile)
+  lisplibWrite('"operationAlist", removeZeroOne first opsAndAtts, $libFile)
   lisplibWrite('"superDomain",removeZeroOne $lisplibSuperDomain,$libFile)
   lisplibWrite('"predicates",removeZeroOne  $lisplibPredicates,$libFile)
   lisplibWrite('"abbreviation",$lisplibAbbreviation,$libFile)
@@ -296,8 +296,8 @@ finalizeLisplib libName ==
   lisplibWrite('"ancestors",removeZeroOne $lisplibAncestors,$libFile)
   lisplibWrite('"documentation",finalizeDocumentation(),$libFile)
   if $profileCompiler then profileWrite()
-  if $lisplibForm and null CDR $lisplibForm then
-    MAKEPROP(CAR $lisplibForm,'NILADIC,'T)
+  if $lisplibForm and null rest $lisplibForm then
+    MAKEPROP(first $lisplibForm, 'NILADIC, 'T)
   ERRORS ~=0 =>    -- ERRORS is a fluid variable for the compiler
     sayMSG ['"   Errors in processing ",kind,'" ",:bright libName,'":"]
     sayMSG ['"     not replacing ",$spadLibFT,'" for",:bright libName]
@@ -307,6 +307,7 @@ lisplibDoRename(libName) ==
     [libName,'ERRORLIB])
 
 lisplibError(cname,fname,type,cn,fn,typ,error) ==
+  $bootStrapMode and error = "wrongType" => nil
   sayMSG bright ['"  Illegal ",$spadLibFT]
   error in '(duplicateAbb  wrongType) =>
     sayKeyedMsg("S2IL0007",
@@ -323,7 +324,7 @@ getConstructorOpsAndAtts(form, kind) ==
   getFunctorOpsAndAtts(form)
 
 getCategoryOpsAndAtts(catForm) ==
-  -- returns [operations,:attributes] of CAR catForm
+  -- returns [operations, :attributes] of first catForm
   [transformOperationAlist getSlot1FromCategoryForm(catForm)]
 
 getFunctorOpsAndAtts(form) ==
@@ -355,7 +356,7 @@ transformOperationAlist operationAlist ==
         condition = 'T => [sig,n]
         [sig,n,condition]
       [sig,n,condition,kind]
-    itemList:= [signatureItem,:LASSQ(op,newAlist)]
+    itemList := [signatureItem, :QLASSQ(op, newAlist)]
     newAlist:= insertAlist(op,itemList,newAlist)
   newAlist
 
@@ -371,11 +372,11 @@ getConstructorSignature form ==
 --% from MODEMAP BOOT
 
 augModemapsFromDomain1(name,functorForm,e) ==
-  GET(KAR functorForm, "makeFunctionList") =>
+  GET(IFCAR functorForm, "makeFunctionList") =>
     addConstructorModemaps(name,functorForm,e)
   atom functorForm and (catform:= getmode(functorForm,e)) =>
     augModemapsFromCategory(name,name,functorForm,catform,e)
-  mappingForm:= getmodeOrMapping(KAR functorForm,e) =>
+  mappingForm := getmodeOrMapping(IFCAR functorForm, e) =>
     ["Mapping",categoryForm,:functArgTypes]:= mappingForm
     catform:= substituteCategoryArguments(rest functorForm,categoryForm)
     augModemapsFromCategory(name,name,functorForm,catform,e)
@@ -415,7 +416,7 @@ mkEvalableCategoryForm c ==       --from DEFINE
 
 isDomainForm(D,e) ==
   --added for MPOLY 3/83 by RDJ
-  MEMQ(KAR D,$SpecialDomainNames) or isFunctor D or
+  MEMQ(IFCAR D, $SpecialDomainNames) or isFunctor D or
     -- ((D is ['Mapping,target,:.]) and isCategoryForm(target,e)) or
      ((getmode(D,e) is ['Mapping,target,:.]) and isCategoryForm(target,e)) or
        isCategoryForm(getmode(D,e),e) or isDomainConstructorForm(D,e)

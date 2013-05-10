@@ -36,7 +36,6 @@ DEFPARAMETER($newCompCompare, false)
 --% FUNCTIONS WHICH MUNCH ON == STATEMENTS
 
 compDefine(form,m,e) ==
-  $macroIfTrue: local := nil
   result:= compDefine1(form,m,e)
   result
 
@@ -46,7 +45,7 @@ compDefine1(form,m,e) ==
   ['DEF,lhs,signature,specialCases,rhs]:= form:= macroExpand(form,e)
   $insideWhereIfTrue and isMacro(form,e) and (m=$EmptyMode or m=$NoValueMode)
      => [lhs,m,put(first lhs,'macro,rhs,e)]
-  null signature.target and not MEMQ(KAR rhs,$ConstructorNames) and
+  null signature.target and not MEMQ(IFCAR rhs, $ConstructorNames) and
     (sig:= getSignatureFromMode(lhs,e)) =>
   -- here signature of lhs is determined by a previous declaration
       compDefine1(['DEF,lhs,[first sig,:rest signature],specialCases,rhs],m,e)
@@ -93,7 +92,7 @@ hasFullSignature(argl,[target,:ml],e) ==
     u~='failed => [target,:u]
 
 addEmptyCapsuleIfNecessary(target,rhs) ==
-  MEMQ(KAR rhs,$SpecialDomainNames) => rhs
+  MEMQ(IFCAR rhs, $SpecialDomainNames) => rhs
   ['add,rhs,['CAPSULE]]
 
 getTargetFromRhs(lhs,rhs,e) ==
@@ -266,7 +265,7 @@ compDefineCategory2(form,signature,specialCases,body,m,e,
     if $extraParms then
       formals:=actuals:=nil
       for u in $extraParms repeat
-        formals:=[CAR u,:formals]
+        formals := [first u, :formals]
         actuals:=[MKQ CDR u,:actuals]
       body := ['sublisV,['PAIR,['QUOTE,formals],['LIST,:actuals]],body]
     if argl then body:=  -- always subst for args after extraparms
@@ -396,7 +395,7 @@ compDefineFunctor1(df is ['DEF,form,signature,$functorSpecialCases,body],
                    while cb repeat
                      ATOM cb => return nil
                      cb is [['LET,'Rep,v,:.],:.] => return (u:=v)
-                     cb:=CDR cb
+                     cb := rest cb
                  u
       then $e:= augModemapsFromCategoryRep('_$,ab,cb,target,$e)
       else $e:= augModemapsFromCategory('_$,'_$,'_$,target,$e)
@@ -565,7 +564,7 @@ genDomainView(viewName, c, viewSelector) ==
   c is ['CATEGORY, ., :l] => genDomainOps(viewName, viewName, c)
   code:= c
   $e := augModemapsFromCategory(viewName, viewName, nil, c, $e)
-  cd := ['LET, viewName, [viewSelector, viewName, mkDomainConstructor code]]
+  cd := ['LET, viewName]
   if null member(cd,$getDomainCode) then
           $getDomainCode:= [cd,:$getDomainCode]
   viewName
@@ -574,10 +573,7 @@ genDomainOps(viewName,dom,cat) ==
   oplist:= getOperationAlist(dom,dom,cat)
   siglist:= [sig for [sig,:.] in oplist]
   oplist:= substNames(dom,viewName,dom,oplist)
-  cd:=
-    ['LET,viewName,['mkOpVec,dom,['LIST,:
-      [['LIST,MKQ op,['LIST,:[mkDomainConstructor mode for mode in sig]]]
-        for [op,sig] in siglist]]]]
+  cd := ['LET, viewName]
   $getDomainCode:= [cd,:$getDomainCode]
   for [opsig,cond,:.] in oplist for i in 0.. repeat
     if opsig in $ConditionalOperators then cond:=nil
@@ -669,9 +665,12 @@ compInternalFunction(df is ['DEF,form,signature,specialCases,body], m, e) ==
     not(IDENTP(op)) =>
         stackAndThrow ['"Bad name for internal function:", op]
     nbody := ["+->", argl, body]
-    nf := ["LET",  [":", op, ["Mapping", :signature]], nbody]
-    ress := comp(nf, m, e)
-    ress
+    fmode := ["Mapping", :signature]
+    [., ., e'] := compMakeDeclaration([":", op, fmode], $EmptyMode, e)
+    T := compWithMappingMode(nbody, fmode, e')
+    T or return nil
+    currentProplist := getProplist(op, e)
+    finish_setq_single(T, fmode, op, nbody, currentProplist)
 
 compDefineCapsuleFunction(df is ['DEF,form,signature,specialCases,body],
   m,oldE,$prefix,$formalArgList) ==
@@ -895,9 +894,6 @@ compile u ==
        then optimizedBody
        else putInLocalDomainReferences optimizedBody
   $doNotCompileJustPrint=true => (PRETTYPRINT stuffToCompile; op')
-  $macroIfTrue =>
-      BREAK()
-      constructMacro stuffToCompile
   result:= spadCompileOrSetq stuffToCompile
   functionStats:=[0,elapsedTime()]
   $functionStats:= addStats($functionStats,functionStats)
@@ -928,15 +924,21 @@ compileConstructor1 (form:=[fn,[key,vl,:bodyl]]) ==
 -- fn is the name of some category/domain/package constructor;
 -- we will cache all of its values on $ConstructorCache with reference
 -- counts
+<<<<<<< HEAD
   $clamList: local := nil
+=======
+  kind := GETDATABASE(fn,'CONSTRUCTORKIND)
+>>>>>>> upstream/master
   lambdaOrSlam :=
-    GETDATABASE(fn,'CONSTRUCTORKIND) = 'category => 'SPADSLAM
+    kind = 'category => 'SPADSLAM
     $mutableDomain => 'LAMBDA
     $clamList:=
       [[fn,"$ConstructorCache",'domainEqualList,'count],:$clamList]
     'LAMBDA
   compForm:= LIST [fn,[lambdaOrSlam,vl,:bodyl]]
-  if GETDATABASE(fn,'CONSTRUCTORKIND) = 'category
+  auxfn := INTERNL(fn, '";")
+  LAM_,EVALANDFILEACTQ(["DECLAIM", ["NOTINLINE", auxfn]])
+  if kind = 'category
       then u:= compAndDefine compForm
       else u:=COMP compForm
   clearConstructorCache fn      --clear cache for constructor
@@ -957,7 +959,7 @@ bootStrapError(functorForm,sourceFile) ==
   ['COND, _
     ['$bootStrapMode, _
         ['VECTOR,mkDomainConstructor functorForm,nil,nil,nil,nil,nil]],
-    [''T, ['systemError,['LIST,''%b,MKQ CAR functorForm,''%d,'"from", _
+    [''T, ['systemError, ['LIST, ''%b, MKQ first functorForm, ''%d, '"from", _
       ''%b,MKQ namestring sourceFile,''%d,'"needs to be compiled"]]]]
 
 compAdd(['add,$addForm,capsule],m,e) ==
@@ -967,8 +969,9 @@ compAdd(['add,$addForm,capsule],m,e) ==
     [['COND, _
        ['$bootStrapMode, _
            code],_
-       [''T, ['systemError,['LIST,''%b,MKQ CAR $functorForm,''%d,'"from", _
-         ''%b, MKQ namestring($edit_file), ''%d, '"needs to be compiled"]]]],
+       [''T, ['systemError, ['LIST, ''%b, MKQ first $functorForm, ''%d,
+         '"from", ''%b, MKQ namestring($edit_file), ''%d, _
+         '"needs to be compiled"]]]],
      m, e]
   $addFormLhs: local:= $addForm
   addForm := $addForm
@@ -1081,7 +1084,7 @@ doIt(item,$predl) ==
       RPLACA(item,first code)
       RPLACD(item,rest code)
     lhs:= lhs'
-    if not member(KAR rhs,$NonMentionableDomainNames) and
+    if not member(IFCAR rhs, $NonMentionableDomainNames) and
       not MEMQ(lhs, $functorLocalParameters) then
          $functorLocalParameters:= [:$functorLocalParameters,lhs]
     if code is ['LET,.,rhs',:.] and isDomainForm(rhs',$e) then
@@ -1109,9 +1112,6 @@ doIt(item,$predl) ==
   item is ["where",b,:l] => doItWhere(item, $predl, $e)
   item is ["MDEF",:.] => [.,.,$e]:= compOrCroak(item,$EmptyMode,$e)
   item is ['DEF,[op,:.],:.] =>
-    body := isMacro(item, $e) =>
-        SAY(["converted function", op, "to macro"])
-        $e:= put(op, 'macro, [body], $e)
     [.,.,$e]:= t:= compOrCroak(item,$EmptyMode,$e)
     RPLACA(item,"CodeDefine")
         --Note that DescendCode, in CodeDefine, is looking for this
@@ -1136,8 +1136,8 @@ localExtras(oldFLP) ==
     oldFLP' := oldFLP
     n := 0
     while oldFLP' repeat
-        oldFLP' := CDR oldFLP'
-        flp1 := CDR flp1
+        oldFLP' := rest oldFLP'
+        flp1 := rest flp1
         n := n + 1
     -- Now we have to add code to compile all the elements
     -- of functorLocalParameters that were added during the
@@ -1294,7 +1294,7 @@ DomainSubstitutionFunction(parameters,body) ==
   atom $definition => body
   null rest $definition => body
            --should not bother if it will only be called once
-  name:= INTERN STRCONC(KAR $definition,";CAT")
+  name := INTERN STRCONC(IFCAR $definition, ";CAT")
   SETANDFILE(name,nil)
   body:= ["COND",[name],['(QUOTE T),['SETQ,name,body]]]
   body
