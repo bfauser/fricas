@@ -6196,7 +6196,7 @@ BASE=""
 AXIOM=${BASE}${fricas_targetdir}
 
 
-CCF="-O2 -Wall -D_GNU_SOURCE"
+CCF="-O0 -Wall -D_GNU_SOURCE"
 LDF=
 
 case $target in

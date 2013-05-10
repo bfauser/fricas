@@ -94,9 +94,7 @@ COMP_-2(args) ==
     junk => MOAN (FORMAT(nil, '"******pren error in (~S (~S ...) ...)",_
                          name, type))
     type is "SLAM" => BREAK()
-    type is "spad_CLAM" =>
-        compClam(name, argl, bodyl, "$ConstructorCache",
-                 'domainEqualList, ['count])
+    LASSQ(name, $clamList) => compClam(name, argl, bodyl, $clamList)
     type is "SPADSLAM" => compSPADSLAM(name, argl, bodyl)
     bodyl := [name, [type, argl, :bodyl]]
     if $PrettyPrint then PPRINT(bodyl)
@@ -158,7 +156,7 @@ compTran1(x) ==
     u := CAR(x)
     u = "QUOTE" => nil
     if u = "MAKEPROP" and $TRACELETFLAG then
-        rplac(CAR x, "MAKEPROP-SAY")
+        RPLAC(CAR x, "MAKEPROP-SAY")
     MEMQ(u, '(SPADLET SETQ LET)) =>
         if NOT($BOOT) or MEMQ($FUNNAME, $traceletFunctions) then
             NCONC(x, $FUNNAME_TAIL)
@@ -174,7 +172,7 @@ compTran1(x) ==
             IDENTP(CADR(x)) => PUSHLOCVAR(CADR(x))
             EQCAR(CADR(x), "FLUID") =>
                 PUSH(CADADR(x), $fluidVars)
-                rplac(CADR(x), CADADR(x))
+                RPLAC(CADR(x), CADADR(x))
             MAPC(FUNCTION PUSHLOCVAR, LISTOFATOMS(CADR x))
     MEMQ(u, '(PROG LAMBDA)) =>
         $newBindings : local := nil

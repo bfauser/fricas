@@ -433,8 +433,7 @@
  `(cdr (the cons (cdr (the cons ,x)))))
 
 (defmacro qcsize (x)
- `(the fixnum (length (the #-(or :ecl :gcl)simple-string
-                           #+(or :ecl :gcl)string ,x))))
+ `(the fixnum (length (the simple-string ,x))))
 
 (defmacro qrefelt (vec ind) `(svref ,vec ,ind))
 
@@ -539,5 +538,3 @@
 (defmacro REPEAT (&rest L) (|expandREPEAT| L))
 (defmacro COLLECT (&rest L) (|expandCOLLECT| L))
 
-;;;
-(defmacro |rplac| (x y) `(setf ,x ,y))

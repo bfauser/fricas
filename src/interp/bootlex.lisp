@@ -84,6 +84,9 @@
     (let ((st |$compiler_output_stream|))
         (print-full body st) ))
 
+(defun print-package (package)
+    (format out-stream "~&~%(IN-PACKAGE ~S )~%~%" package))
+
 (defvar |$MacroTable|)
 
 (defun |spadCompile| (spad-input-file
@@ -96,7 +99,7 @@
            (XCape #\_)
            (*EOF* NIL)
            (File-Closed NIL)
-           in-stream)
+           in-stream out-stream)
   (declare (special |$comp370_apply| *EOF*
                     in-stream File-Closed Xcape))
   ;; only rebind |$InteractiveFrame| if compiling
@@ -112,7 +115,8 @@
     (progn
       (setf in-stream (open spad-input-file :direction :input))
       (initialize-preparse in-stream)
-      (setq CUROUTSTREAM *standard-output*)
+      (setf out-stream *standard-output*)
+      (setq curoutstream out-stream)
       (setf |$MacroTable| (make-hash-table))
       (loop
        (if (or *eof* file-closed) (return nil))
@@ -124,9 +128,10 @@
                (let ((parseout (|pop_stack_1|)) )
                  (when parseout
                        (|S_process| parseout)
-                       (format CUROUTSTREAM "~&")))
+                       (format out-stream "~&")))
+               ;(IOClear in-stream out-stream)
                )))
-      (IOClear)))
+      (IOClear in-stream out-stream)))
     (shut in-stream)
     )
   T))

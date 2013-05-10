@@ -52,7 +52,10 @@ maintainer-clean-recursive:
 	   esac; \
 	done; \
 	dot_seen=no; \
-	list='$(SUBDIRS)' ; \
+	case "$@" in \
+	   distclean-* | maintainer-clean-*) list='$(DIST_SUBDIRS)' ;; \
+	   *) list='$(SUBDIRS)' ;; \
+	esac; \
 	rev=''; \
 	for subdir in $$list; do \
 	   if test "$$subdir" != "."; then \
@@ -142,6 +145,4 @@ distclean-generic: clean-generic
 	-rm -rf $(fricas_target_docdir)/$(subdir)
 
 distclean: distclean-recursive
-	-rm Makefile
-
 distclean-ax: distclean-generic distclean-local

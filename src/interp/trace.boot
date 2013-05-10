@@ -482,14 +482,14 @@ spadTrace(domain,options) ==
         traceName:= BPITRACE(dn1, alias, options)
         tf := SYMBOL_-FUNCTION traceName
     NCONC(pair,[listOfVariables,first domain.n,traceName,alias])
-    rplac(first domain.n, tf)
+    RPLAC(first domain.n, tf)
   sigSlotNumberAlist:= [x for x in sigSlotNumberAlist | CDDDR x]
   if $reportSpadTrace then
     if $traceNoisely then printDashedLine()
     for x in orderBySlotNumber sigSlotNumberAlist repeat
       reportSpadTrace("TRACING",x)
   currentEntry =>
-    rplac(rest currentEntry,[:sigSlotNumberAlist,:currentAlist])
+    RPLAC(rest currentEntry,[:sigSlotNumberAlist,:currentAlist])
   SETQ(_/TRACENAMES,[[domain,:sigSlotNumberAlist],:_/TRACENAMES])
   spadReply()
 
@@ -499,14 +499,14 @@ goGetTracer0(fn, alias, options, modemap) ==
 
 goGetTracer(l, dn, f, tlst, alias, options, modemap) ==
     oname := tlst.5
-    rplac(first dn, f)
+    RPLAC(first dn, f)
     [:arglist, env] := l
     slot := replaceGoGetSlot env
     tlst.4 := first slot
     traceName := goGetTracer0(first slot, alias, options, modemap)
     nf := SYMBOL_-FUNCTION traceName
     setSf(oname, nf)
-    rplac(first slot, nf)
+    RPLAC(first slot, nf)
     APPLY(first slot, [:arglist, rest slot])  --SPADCALL it!
 
 
@@ -727,12 +727,12 @@ spadUntrace(domain,options) ==
   for (pair:= [op,sig,n,lv,bpiPointer,traceName,alias]) in sigSlotNumberAlist |
     anyifTrue or MEMQ(op,listOfOperations) repeat
       BPIUNTRACE(traceName,alias)
-      rplac(first domain.n, bpiPointer)
-      rplac(CDDDR pair, nil)
+      RPLAC(first domain.n,bpiPointer)
+      RPLAC(CDDDR pair,nil)
       if assocPair:= assoc(BPINAME bpiPointer,$letAssoc) then
         $letAssoc := REMOVER($letAssoc,assocPair)
   newSigSlotNumberAlist:= [x for x in sigSlotNumberAlist | CDDDR x]
-  newSigSlotNumberAlist => rplac(rest pair, newSigSlotNumberAlist)
+  newSigSlotNumberAlist => RPLAC(rest pair,newSigSlotNumberAlist)
   SETQ(_/TRACENAMES,DELASC(domain,_/TRACENAMES))
   spadReply()
 

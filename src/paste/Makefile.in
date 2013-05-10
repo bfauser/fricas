@@ -105,4 +105,3 @@ mostlyclean-local:
 
 clean-local: mostlyclean-local
 
-distclean-local: clean-local

@@ -101,10 +101,10 @@ getAbbreviation(name,c) ==
     N:= ASSQ(name,rest X) =>
       C:= ASSQ(c,rest N) => rest C --already there
       newAbbreviation:= mkAbbrev(X,x)
-      rplac(rest N, [[c, :newAbbreviation], :rest N])
+      RPLAC(rest N,[[c,:newAbbreviation],:rest N])
       newAbbreviation
     newAbbreviation:= mkAbbrev(X,x)
-    rplac(rest X, [[name, [c, :newAbbreviation]], :rest X])
+    RPLAC(rest X,[[name,[c,:newAbbreviation]],:rest X])
     newAbbreviation
   $abbreviationTable:= [[x,[name,[c,:x]]],:$abbreviationTable]
   x

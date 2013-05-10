@@ -47,7 +47,7 @@
 
 ;; DEFVARS
 
-(defvar CUROUTSTREAM *standard-output*)
+(defvar curoutstream (make-synonym-stream '*standard-output*))
 
 (defvar *fileactq-apply* nil "function to apply in fileactq")
 
@@ -168,6 +168,12 @@
   (and (streamp stream) (output-stream-p stream)
        (eq (system:fp-output-stream stream)
            (system:fp-output-stream *terminal-io*))))
+
+#-:GCL
+(defun IS-CONSOLE (stream)
+     (or (eq stream *standard-output*)
+         (and (typep stream 'synonym-stream)
+              (eq (SYNONYM-STREAM-SYMBOL stream) '*standard-output*))))
 
 ; 11.0 Operations on Identifiers
 
@@ -979,6 +985,16 @@
   (multiple-value-bind (f e s)
     (decode-float u)
     (cons (* s f) e)))
+
+;;; Contributed by Juergen Weiss from Arthur Norman's CCL.
+(defun acot (a)
+  (if (> a 0.0)
+    (if (> a 1.0)
+       (atan (/ 1.0 a))
+       (- (/ pi 2.0) (atan a)))
+    (if (< a -1.0)
+       (- pi (atan (/ -1.0 a)))
+       (+ (/ pi 2.0) (atan (- a))))))
 
 ;;; Contributed by Juergen Weiss from Arthur Norman's CCL.
 (defun cot (a)

@@ -2,10 +2,7 @@
 default: efricas fricas-cpl.el
 
 clean:
-	-rm efricas fricas-cpl.el fricas-cpl.in gen-cpl.$(FASLEXT)
-
-distclean: clean
-	-rm Makefile
+	-rm efricas fricas-cpl.el fricas-cpl.in
 
 install_emacs_dir = @emacsdatadir@
 EMACSCMDS = \

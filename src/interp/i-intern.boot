@@ -594,7 +594,7 @@ addBindingInteractive(var,proplist,e is [[curContour,:.],:.]) ==
   u := ASSQ(var,curContour) =>
     RPLACD(u,proplist)
     e
-  rplac(CAAR e, [[var, :proplist], :curContour])
+  RPLAC(CAAR e,[[var,:proplist],:curContour])
   e
 
 augProplistInteractive(proplist,prop,val) ==
@@ -647,6 +647,9 @@ getI(x,prop) == get(x,prop,$InteractiveFrame)
 putI(x,prop,val) == ($InteractiveFrame := put(x,prop,val,$InteractiveFrame))
 
 getIProplist x == getProplist(x,$InteractiveFrame)
+
+removeBindingI x ==
+  RPLAC(CAAR $InteractiveFrame,deleteAssocWOC(x,CAAR $InteractiveFrame))
 
 rempropI(x,prop) ==
   id:=
@@ -702,7 +705,7 @@ addIntSymTabBinding(var,proplist,e is [[curContour,:.],:.]) ==
   u := ASSQ(var,curContour) =>
     RPLACD(u,proplist)
     e
-  rplac(CAAR e, [[var, :proplist], :curContour])
+  RPLAC(CAAR e,[[var,:proplist],:curContour])
   e
 
 
